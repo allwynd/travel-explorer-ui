@@ -70,6 +70,7 @@ async function loadTrips() {
     allTrips = d.data || [];
     renderDashboard();
     populateTripSelects();
+    if (currentView === 'trips') renderTripsTable();
   } catch (err) {
     showToast('Failed to load trips', 'error');
   }
@@ -319,7 +320,14 @@ function populateAnalyticsTripSelect() {
 }
 
 async function loadAnalytics(tripId) {
-  if (!tripId) return;
+  if (!tripId) {
+    document.getElementById('analyticsContent').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📊</div>
+        <p>Select a trip to view spending analytics.</p>
+      </div>`;
+    return;
+  }
   currentTripId = tripId;
   try {
     const r = await fetch(`${API_BASE}/expenses/summary/${tripId}`);
@@ -593,7 +601,6 @@ async function deleteTrip(id) {
     showToast('Trip deleted', 'success');
     if (currentTripId === id) currentTripId = null;
     await loadTrips();
-    if (currentView === 'trips') renderTripsTable();
   } catch (err) {
     showToast(err.message || 'Failed to delete', 'error');
   }
