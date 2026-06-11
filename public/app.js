@@ -237,7 +237,6 @@ async function renderExpenses() {
     allExpenses = expR.data || [];
     const sum = sumR.data;
 
-    // Keep the inline trip selector in sync
     const expSel = document.getElementById('expenseTripSelect');
     if (expSel) expSel.value = currentTripId;
 
@@ -372,7 +371,14 @@ function renderAnalytics(data) {
   const maxDay = Math.max(...days.map(d => d[1]), 1);
   const dailyBars = days.map(([day, amt]) => {
     const pct = (amt / maxDay) * 100;
-    const dateLabel = new Date(day).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    // Normalise to YYYY-MM-DD regardless of whether the key is a full ISO
+    // timestamp ("2024-06-15T00:00:00.000Z") or just a date ("2024-06-15")
+    const datePart = day.split('T')[0];
+    const [year, month, date] = datePart.split('-').map(Number);
+    const d = new Date(year, month - 1, date);
+    const dateLabel = (year && month && date && !isNaN(d))
+      ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      : datePart; // fallback: show raw string rather than "Invalid Date"
     return `
       <div class="bar-row">
         <div class="bar-label" style="width:80px;font-size:11px">${dateLabel}</div>
