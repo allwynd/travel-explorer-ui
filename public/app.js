@@ -70,6 +70,7 @@ async function loadTrips() {
     allTrips = d.data || [];
     renderDashboard();
     populateTripSelects();
+    if (currentView === 'trips') renderTripsTable();
   } catch (err) {
     showToast('Failed to load trips', 'error');
   }
@@ -588,7 +589,6 @@ async function deleteTrip(id) {
     showToast('Trip deleted', 'success');
     if (currentTripId === id) currentTripId = null;
     await loadTrips();
-    if (currentView === 'trips') renderTripsTable();
   } catch (err) {
     showToast(err.message || 'Failed to delete', 'error');
   }
