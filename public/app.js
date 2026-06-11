@@ -70,7 +70,6 @@ async function loadTrips() {
     allTrips = d.data || [];
     renderDashboard();
     populateTripSelects();
-    if (currentView === 'trips') renderTripsTable();
   } catch (err) {
     showToast('Failed to load trips', 'error');
   }
@@ -83,6 +82,12 @@ function populateTripSelects() {
   const placeholder = '<option value="">— Select a trip —</option>';
   document.getElementById('globalTripSelect').innerHTML = placeholder + opts;
   if (currentTripId) document.getElementById('globalTripSelect').value = currentTripId;
+
+  const expSel = document.getElementById('expenseTripSelect');
+  if (expSel) {
+    expSel.innerHTML = placeholder + opts;
+    if (currentTripId) expSel.value = currentTripId;
+  }
 
   populateAnalyticsTripSelect();
 }
@@ -217,7 +222,6 @@ async function renderTripsTable() {
 // ── Expenses ──────────────────────────────────────────────────────────────────
 async function renderExpenses() {
   if (!currentTripId) {
-    document.getElementById('expenseTripInfo').textContent = 'Select a trip to view expenses';
     document.getElementById('budgetBarWrap').style.display = 'none';
     document.getElementById('expensesList').innerHTML = `
       <div class="empty-state"><div class="empty-icon">💳</div><p>Select a trip first.</p></div>`;
@@ -231,11 +235,11 @@ async function renderExpenses() {
     ]);
     allExpenses = expR.data || [];
     const sum = sumR.data;
-    const trip = sum?.trip;
 
-    // Header
-    document.getElementById('expenseTripInfo').textContent =
-      `${trip?.name || 'Trip'} — ${trip?.destination || ''}`;
+    // Keep the inline trip selector in sync
+    const expSel = document.getElementById('expenseTripSelect');
+    if (expSel) expSel.value = currentTripId;
+
     document.getElementById('budgetBarWrap').style.display = 'block';
 
     const pct  = sum.percentUsed || 0;
@@ -589,6 +593,7 @@ async function deleteTrip(id) {
     showToast('Trip deleted', 'success');
     if (currentTripId === id) currentTripId = null;
     await loadTrips();
+    if (currentView === 'trips') renderTripsTable();
   } catch (err) {
     showToast(err.message || 'Failed to delete', 'error');
   }

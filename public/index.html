@@ -124,7 +124,12 @@
         <button class="btn btn-primary" onclick="openAddExpenseModal()">+ Add Expense</button>
       </div>
       <div class="expense-trip-bar">
-        <div class="expense-trip-info" id="expenseTripInfo">Select a trip to view expenses</div>
+        <div class="expense-trip-selector">
+          <label class="expense-trip-label" for="expenseTripSelect">Trip</label>
+          <select id="expenseTripSelect" onchange="onTripSelect(this.value)">
+            <option value="">— Select a trip —</option>
+          </select>
+        </div>
         <div class="budget-bar-wrap" id="budgetBarWrap" style="display:none">
           <div class="budget-bar-label">
             <span>Budget Used: <strong id="budgetPct">0%</strong></span>
