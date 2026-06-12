@@ -812,6 +812,12 @@ function renderPlannerResults(plan, params) {
   const totalPP   = Math.round(totalAll / params.travellers);
   const budgetLabel = { budget: '🎒 Budget', mid: '⭐ Mid-range', luxury: '💎 Luxury' }[params.budgetLevel];
 
+  // Store plan safely on window so the Create Trip button can reference it
+  // without embedding raw JSON inside an HTML attribute (which breaks on
+  // apostrophes, backticks, and other special characters in the AI response).
+  window._lastPlan      = plan;
+  window._lastPlanTotal = totalAll;
+
   const cards = plan.categories.map(cat => `
     <div class="planner-card">
       <div class="planner-card-accent" style="background:${cat.color}"></div>
@@ -877,7 +883,7 @@ function renderPlannerResults(plan, params) {
       </div>
       <div class="planner-cta-actions">
         <button class="btn btn-ghost" onclick="runPlanner()">↺ Replan</button>
-        <button class="btn btn-primary" onclick="createTripFromPlan(${JSON.stringify(plan).replace(/"/g, '&quot;')}, ${totalAll})">+ Create Trip</button>
+        <button class="btn btn-primary" onclick="createTripFromPlan(window._lastPlan, window._lastPlanTotal)">+ Create Trip</button>
       </div>
     </div>`;
 }
