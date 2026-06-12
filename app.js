@@ -371,14 +371,12 @@ function renderAnalytics(data) {
   const maxDay = Math.max(...days.map(d => d[1]), 1);
   const dailyBars = days.map(([day, amt]) => {
     const pct = (amt / maxDay) * 100;
-    // Normalise to YYYY-MM-DD regardless of whether the key is a full ISO
-    // timestamp ("2024-06-15T00:00:00.000Z") or just a date ("2024-06-15")
     const datePart = day.split('T')[0];
     const [year, month, date] = datePart.split('-').map(Number);
     const d = new Date(year, month - 1, date);
     const dateLabel = (year && month && date && !isNaN(d))
       ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-      : datePart; // fallback: show raw string rather than "Invalid Date"
+      : datePart;
     return `
       <div class="bar-row">
         <div class="bar-label" style="width:80px;font-size:11px">${dateLabel}</div>
@@ -751,3 +749,148 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
     if (e.target === overlay) overlay.classList.add('hidden');
   });
 });
+
+// ── Plan My Trip ──────────────────────────────────────────────────────────────
+
+async function runPlanner() {
+  const origin      = document.getElementById('plannerOrigin').value.trim();
+  const destination = document.getElementById('plannerDestination').value.trim();
+  const travellers  = parseInt(document.getElementById('plannerTravellers').value) || 2;
+  const duration    = parseInt(document.getElementById('plannerDuration').value) || 7;
+  const budgetLevel = document.getElementById('plannerBudgetLevel').value;
+
+  if (!destination) { showToast('Please enter a destination', 'error'); return; }
+
+  const btn = document.getElementById('plannerGoBtn');
+  btn.disabled = true;
+  btn.textContent = 'Planning…';
+
+  document.getElementById('plannerResults').innerHTML = `
+    <div class="planner-loading">
+      <div class="planner-spinner"></div>
+      <div class="planner-loading-label">Building your trip plan…</div>
+    </div>`;
+
+  try {
+    const plan = await fetchTripPlan({ origin, destination, travellers, duration, budgetLevel });
+    renderPlannerResults(plan, { origin, destination, travellers, duration, budgetLevel });
+  } catch (err) {
+    document.getElementById('plannerResults').innerHTML = `
+      <div class="planner-error">
+        <div style="font-size:32px;margin-bottom:12px">⚠️</div>
+        <div style="font-size:16px;font-weight:600">Couldn't generate a plan</div>
+        <div style="font-size:13px;margin-top:6px;opacity:.7">${err.message}</div>
+      </div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✦ Plan My Trip';
+  }
+}
+
+async function fetchTripPlan({ origin, destination, travellers, duration, budgetLevel }) {
+  const response = await fetch(`${API_BASE}/plan`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ origin, destination, travellers, duration, budgetLevel }),
+  });
+
+  const data = await response.json();
+  if (data && data.success === false) throw new Error(data.message || 'Failed to generate plan');
+
+  // Tolerate either a wrapped ({ success, data: {...} }) or a flat plan response.
+  const plan = data && data.data ? data.data : data;
+  if (!plan || !Array.isArray(plan.categories)) {
+    throw new Error('Plan response was missing its category breakdown');
+  }
+  return plan;
+}
+
+function renderPlannerResults(plan, params) {
+  const categories = Array.isArray(plan.categories) ? plan.categories : [];
+  const tipsList   = Array.isArray(plan.tips) ? plan.tips : [];
+  const totalAll  = categories.reduce((s, c) => s + (c.totalCost || 0), 0);
+  const totalPP   = Math.round(totalAll / params.travellers);
+  const budgetLabel = { budget: '🎒 Budget', mid: '⭐ Mid-range', luxury: '💎 Luxury' }[params.budgetLevel];
+
+  const cards = plan.categories.map(cat => `
+    <div class="planner-card">
+      <div class="planner-card-accent" style="background:${cat.color}"></div>
+      <div class="planner-card-header">
+        <div class="planner-card-icon">${cat.icon}</div>
+        <div>
+          <div class="planner-card-title">${cat.title}</div>
+          <div class="planner-card-subtitle">${cat.subtitle}</div>
+        </div>
+      </div>
+      <div class="planner-card-amount">$${cat.totalCost.toLocaleString()}</div>
+      <div class="planner-card-per">$${cat.perPerson.toLocaleString()} per person</div>
+      <div class="planner-line-items">
+        ${cat.lineItems.map(li => `
+          <div class="planner-line">
+            <span class="planner-line-label">${li.label}</span>
+            <span class="planner-line-val">${li.value}</span>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+
+  const tips = plan.tips.map((tip, i) => `
+    <div class="planner-tip">
+      <div class="planner-tip-dot">${i + 1}</div>
+      <div>${tip}</div>
+    </div>`).join('');
+
+  document.getElementById('plannerResults').innerHTML = `
+    <div class="planner-hero">
+      <div class="planner-hero-eyebrow">✦ Your Trip Plan · ${budgetLabel}</div>
+      <div class="planner-hero-title">${esc(plan.destination)}</div>
+      <div class="planner-hero-meta">${params.travellers} traveller${params.travellers > 1 ? 's' : ''} · ${params.duration} nights${params.origin ? ' · from ' + esc(params.origin) : ''}</div>
+      <div class="planner-hero-meta" style="font-style:italic;margin-bottom:20px;opacity:.45">${esc(plan.summary)}</div>
+      <div class="planner-hero-totals">
+        <div class="planner-total-item">
+          <div class="planner-total-val">$${totalAll.toLocaleString()}</div>
+          <div class="planner-total-label">Total estimated budget</div>
+        </div>
+        <div class="planner-total-item">
+          <div class="planner-total-val">$${totalPP.toLocaleString()}</div>
+          <div class="planner-total-label">Per person</div>
+        </div>
+        <div class="planner-total-item">
+          <div class="planner-total-val">$${Math.round(totalPP / params.duration).toLocaleString()}</div>
+          <div class="planner-total-label">Per person / night</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="planner-grid">${cards}</div>
+
+    <div class="planner-tips-card">
+      <div class="planner-tips-title">💡 Insider Tips</div>
+      <div class="planner-tips-list">${tips}</div>
+      ${plan.visaInfo ? `<div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(42,122,110,0.15);font-size:13px;color:var(--ink-soft)"><strong>🛂 Visa:</strong> ${esc(plan.visaInfo)}</div>` : ''}
+      ${plan.bestTimeToVisit ? `<div style="margin-top:8px;font-size:13px;color:var(--ink-soft)"><strong>📅 Best time to visit:</strong> ${esc(plan.bestTimeToVisit)}</div>` : ''}
+    </div>
+
+    <div class="planner-cta">
+      <div>
+        <div class="planner-cta-text">Ready to make it official?</div>
+        <div class="planner-cta-sub">Create a trip and start tracking your actual expenses.</div>
+      </div>
+      <div class="planner-cta-actions">
+        <button class="btn btn-ghost" onclick="runPlanner()">↺ Replan</button>
+        <button class="btn btn-primary" onclick="createTripFromPlan(${JSON.stringify(plan).replace(/"/g, '&quot;')}, ${totalAll})">+ Create Trip</button>
+      </div>
+    </div>`;
+}
+
+function createTripFromPlan(plan, totalBudget) {
+  document.getElementById('tripId').value = '';
+  document.getElementById('tripModalTitle').textContent = 'New Trip';
+  document.getElementById('tripName').value = plan.destination;
+  document.getElementById('tripDestination').value = plan.destination;
+  document.getElementById('tripStartDate').value = '';
+  document.getElementById('tripEndDate').value = '';
+  document.getElementById('tripCurrency').value = 'USD';
+  document.getElementById('tripBudget').value = totalBudget;
+  document.getElementById('tripNotes').value = `AI-planned trip. ${plan.summary}`;
+  openModal('tripModal');
+}

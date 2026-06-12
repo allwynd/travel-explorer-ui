@@ -33,6 +33,9 @@
       <button class="nav-btn" data-view="analytics" onclick="switchView('analytics')">
         <span class="nav-icon">📊</span> Analytics
       </button>
+      <button class="nav-btn" data-view="planner" onclick="switchView('planner')">
+        <span class="nav-icon">🧭</span> Plan My Trip
+      </button>
     </nav>
 
     <div class="sidebar-trip-select">
@@ -124,12 +127,7 @@
         <button class="btn btn-primary" onclick="openAddExpenseModal()">+ Add Expense</button>
       </div>
       <div class="expense-trip-bar">
-        <div class="expense-trip-selector">
-          <label class="expense-trip-label" for="expenseTripSelect">Trip</label>
-          <select id="expenseTripSelect" onchange="onTripSelect(this.value)">
-            <option value="">— Select a trip —</option>
-          </select>
-        </div>
+        <div class="expense-trip-info" id="expenseTripInfo">Select a trip to view expenses</div>
         <div class="budget-bar-wrap" id="budgetBarWrap" style="display:none">
           <div class="budget-bar-label">
             <span>Budget Used: <strong id="budgetPct">0%</strong></span>
@@ -187,6 +185,56 @@
         <div class="empty-state">
           <div class="empty-icon">📊</div>
           <p>Select a trip to view spending analytics.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLANNER VIEW -->
+    <section class="view hidden" id="view-planner">
+      <div class="page-header">
+        <h1 class="page-title">Plan My Trip</h1>
+        <span class="planner-badge">✦ AI Powered</span>
+      </div>
+
+      <!-- Search bar -->
+      <div class="planner-search-card">
+        <div class="planner-search-row">
+          <div class="planner-field">
+            <label>Flying from</label>
+            <input type="text" id="plannerOrigin" placeholder="e.g. Auckland" />
+          </div>
+          <div class="planner-divider">→</div>
+          <div class="planner-field">
+            <label>Destination</label>
+            <input type="text" id="plannerDestination" placeholder="e.g. Tokyo, Japan" />
+          </div>
+          <div class="planner-field planner-field-sm">
+            <label>Travellers</label>
+            <input type="number" id="plannerTravellers" value="2" min="1" max="20" />
+          </div>
+          <div class="planner-field planner-field-sm">
+            <label>Duration (nights)</label>
+            <input type="number" id="plannerDuration" value="7" min="1" max="90" />
+          </div>
+          <div class="planner-field planner-field-sm">
+            <label>Budget level</label>
+            <select id="plannerBudgetLevel">
+              <option value="budget">🎒 Budget</option>
+              <option value="mid" selected>⭐ Mid-range</option>
+              <option value="luxury">💎 Luxury</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary planner-go-btn" id="plannerGoBtn" onclick="runPlanner()">
+          ✦ Plan My Trip
+        </button>
+      </div>
+
+      <!-- Results area -->
+      <div id="plannerResults">
+        <div class="planner-empty">
+          <div class="planner-empty-icon">🧭</div>
+          <p>Enter a destination above and let AI build your trip budget.</p>
         </div>
       </div>
     </section>
