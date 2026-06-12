@@ -2,7 +2,9 @@
    TRAVEL EXPLORER — Frontend Application
 ════════════════════════════════════════════════════ */
 
-const API_BASE = "http://localhost:3000";
+const API_BASE = "https://travel-explorer-api-f0ccdkhvhjg5fwa2.australiaeast-01.azurewebsites.net";
+//"http://localhost:3000";
+
 let allTrips = [];
 let allExpenses = [];
 let currentTripId = null;
