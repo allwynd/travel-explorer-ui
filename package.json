@@ -1,0 +1,10 @@
+{
+  "name": "travel-explorer-ui",
+  "version": "1.0.0",
+  "description": "Frontend for the travel explorer app",
+  "main": "index.html",
+  "scripts": {
+    "start": "live-server --port=8080",
+    "build": "echo \"No build needed\""
+  }
+}
