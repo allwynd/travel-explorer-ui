@@ -127,6 +127,12 @@
         <button class="btn btn-primary" onclick="openAddExpenseModal()">+ Add Expense</button>
       </div>
       <div class="expense-trip-bar">
+        <div class="expense-trip-selector">
+          <label class="expense-trip-label" for="expenseTripSelect">Trip</label>
+          <select id="expenseTripSelect" onchange="onTripSelect(this.value)">
+            <option value="">— Select a trip —</option>
+          </select>
+        </div>
         <div class="expense-trip-info" id="expenseTripInfo">Select a trip to view expenses</div>
         <div class="budget-bar-wrap" id="budgetBarWrap" style="display:none">
           <div class="budget-bar-label">
@@ -194,6 +200,22 @@
       <div class="page-header">
         <h1 class="page-title">Plan My Trip</h1>
         <span class="planner-badge">✦ AI Powered</span>
+      </div>
+
+      <!-- AI powered banner -->
+      <div class="planner-ai-banner">
+        <div class="planner-ai-orb">
+          <div class="planner-ai-orb-ring"></div>
+          <div class="planner-ai-orb-core"></div>
+        </div>
+        <div class="planner-ai-text">
+          <div class="planner-ai-label">Powered by AI</div>
+          <div class="planner-ai-sub">Real-time budget breakdowns, insider tips, and cost estimates — generated fresh for every search.</div>
+        </div>
+        <div class="planner-ai-powered">
+          <div class="planner-ai-powered-dot"></div>
+          AI
+        </div>
       </div>
 
       <!-- Search bar -->

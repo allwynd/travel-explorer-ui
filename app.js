@@ -767,8 +767,13 @@ async function runPlanner() {
 
   document.getElementById('plannerResults').innerHTML = `
     <div class="planner-loading">
-      <div class="planner-spinner"></div>
-      <div class="planner-loading-label">Building your trip plan…</div>
+      <div class="planner-ai-nodes">
+        <div class="planner-ai-nodes-ring"></div>
+        <div class="planner-ai-nodes-inner"></div>
+        <div class="planner-ai-nodes-core"></div>
+      </div>
+      <div class="planner-loading-label">AI is planning your trip…</div>
+      <div class="planner-loading-sub">Researching flights · pricing hotels · finding hidden gems</div>
     </div>`;
 
   try {
