@@ -10,6 +10,21 @@
 </head>
 <body>
 
+  <!-- ── Global Page Loader ────────────────────────────────────── -->
+  <div class="page-loader" id="pageLoader">
+    <div class="page-loader-inner">
+      <div class="loader-plane-wrap">
+        <div class="loader-trail"></div>
+        <div class="loader-plane">✈</div>
+      </div>
+      <div class="loader-label">Travel Explorer</div>
+      <div class="loader-sub" id="loaderSub">Loading your trips…</div>
+      <div class="loader-dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Sidebar Navigation ─────────────────────────────────── -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
@@ -70,32 +85,30 @@
       <div class="stats-row" id="dashStats">
         <div class="stat-card">
           <div class="stat-icon">🧳</div>
-          <div class="stat-value" id="stat-trips">0</div>
+          <div class="stat-value skeleton-val" id="stat-trips">—</div>
           <div class="stat-label">Total Trips</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">💰</div>
-          <div class="stat-value" id="stat-budget">$0</div>
+          <div class="stat-value skeleton-val" id="stat-budget">—</div>
           <div class="stat-label">Total Budget</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">💸</div>
-          <div class="stat-value" id="stat-spent">$0</div>
+          <div class="stat-value skeleton-val" id="stat-spent">—</div>
           <div class="stat-label">Total Spent</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">✅</div>
-          <div class="stat-value" id="stat-remaining">$0</div>
+          <div class="stat-value skeleton-val" id="stat-remaining">—</div>
           <div class="stat-label">Remaining</div>
         </div>
       </div>
       <div class="section-title">Your Trips</div>
       <div class="trip-grid" id="tripGrid">
-        <div class="empty-state">
-          <div class="empty-icon">🌍</div>
-          <p>No trips yet. Create your first adventure!</p>
-          <button class="btn btn-primary" onclick="openModal('tripModal')">Add a Trip</button>
-        </div>
+        <div class="trip-card skeleton-card"><div class="skeleton-block sk-title"></div><div class="skeleton-block sk-line"></div><div class="skeleton-block sk-line sk-short"></div><div class="skeleton-block sk-bar"></div></div>
+        <div class="trip-card skeleton-card"><div class="skeleton-block sk-title"></div><div class="skeleton-block sk-line"></div><div class="skeleton-block sk-line sk-short"></div><div class="skeleton-block sk-bar"></div></div>
+        <div class="trip-card skeleton-card"><div class="skeleton-block sk-title"></div><div class="skeleton-block sk-line"></div><div class="skeleton-block sk-line sk-short"></div><div class="skeleton-block sk-bar"></div></div>
       </div>
     </section>
 
@@ -169,10 +182,9 @@
         <input type="text" id="filterSearch" placeholder="Search expenses…" oninput="filterExpenses()" />
       </div>
       <div class="expenses-list" id="expensesList">
-        <div class="empty-state">
-          <div class="empty-icon">💳</div>
-          <p>Select a trip and add your first expense.</p>
-        </div>
+        <div class="expense-item skeleton-card"><div class="expense-cat-icon skeleton-block"></div><div class="expense-info"><div class="skeleton-block sk-line"></div><div class="skeleton-block sk-line sk-short" style="margin-top:6px"></div></div><div class="expense-amount"><div class="skeleton-block sk-short"></div></div></div>
+        <div class="expense-item skeleton-card"><div class="expense-cat-icon skeleton-block"></div><div class="expense-info"><div class="skeleton-block sk-line"></div><div class="skeleton-block sk-line sk-short" style="margin-top:6px"></div></div><div class="expense-amount"><div class="skeleton-block sk-short"></div></div></div>
+        <div class="expense-item skeleton-card"><div class="expense-cat-icon skeleton-block"></div><div class="expense-info"><div class="skeleton-block sk-line"></div><div class="skeleton-block sk-line sk-short" style="margin-top:6px"></div></div><div class="expense-amount"><div class="skeleton-block sk-short"></div></div></div>
       </div>
     </section>
 

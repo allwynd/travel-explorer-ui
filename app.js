@@ -2,8 +2,9 @@
    TRAVEL EXPLORER — Frontend Application
 ════════════════════════════════════════════════════ */
 
-const API_BASE = "https://travel-explorer-api-f0ccdkhvhjg5fwa2.australiaeast-01.azurewebsites.net";
+const API_BASE = 
 //"http://localhost:3000";
+"https://mytravel-explorer-api-hmb2daezgtevaegu.australiaeast-01.azurewebsites.net";
 
 let allTrips = [];
 let allExpenses = [];
@@ -26,10 +27,82 @@ const CATEGORY_META = {
 
 const CHART_COLORS = ['#c8522a','#d4a843','#2a7a6e','#4a8fb5','#7a5a9e','#e8705a','#5a9e6e','#f59e0b','#06b6d4','#a855f7'];
 
+// ── Loader utilities ─────────────────────────────────────────────────────────
+
+// Page-level loader (full screen on boot)
+const loaderMessages = [
+  'Loading your trips…',
+  'Fetching expenses…',
+  'Crunching the numbers…',
+  'Almost there…',
+];
+let loaderMsgIdx = 0;
+let loaderMsgInterval = null;
+
+function showPageLoader() {
+  const el = document.getElementById('pageLoader');
+  if (el) el.classList.remove('hidden');
+  // Cycle through witty messages while loading
+  loaderMsgInterval = setInterval(() => {
+    loaderMsgIdx = (loaderMsgIdx + 1) % loaderMessages.length;
+    const sub = document.getElementById('loaderSub');
+    if (sub) {
+      sub.style.opacity = '0';
+      setTimeout(() => {
+        sub.textContent = loaderMessages[loaderMsgIdx];
+        sub.style.opacity = '1';
+      }, 200);
+    }
+  }, 1200);
+}
+
+function hidePageLoader() {
+  clearInterval(loaderMsgInterval);
+  const el = document.getElementById('pageLoader');
+  if (el) el.classList.add('hidden');
+}
+
+// Button spinner — wraps any button while its async action runs
+// Usage: const stop = startBtnLoading(btn, 'Saving…'); await doWork(); stop();
+function startBtnLoading(btn, label = '') {
+  if (!btn) return () => {};
+  const original = btn.innerHTML;
+  btn.innerHTML = label
+    ? `<span class="btn-text">${label}</span>`
+    : `<span class="btn-text">${original}</span>`;
+  btn.classList.add('btn-loading');
+  btn.disabled = true;
+  return () => {
+    btn.innerHTML = original;
+    btn.classList.remove('btn-loading');
+    btn.disabled = false;
+  };
+}
+
+// Inline section spinner — replaces a container's content while loading
+function showSectionLoader(containerId, message = 'Loading…') {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `
+    <div class="section-loader">
+      <div class="section-loader-ring"></div>
+      <div class="section-loader-text">${message}</div>
+    </div>`;
+}
+
+// Remove skeleton shimmer from stat values once real data arrives
+function clearStatSkeletons() {
+  ['stat-trips','stat-budget','stat-spent','stat-remaining'].forEach(id => {
+    document.getElementById(id)?.classList.remove('skeleton-val');
+  });
+}
+
 // ── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+  showPageLoader();
   await loadTrips();
   checkHealth();
+  hidePageLoader();
 });
 
 async function checkHealth() {
@@ -105,6 +178,7 @@ function onTripSelect(id) {
 async function renderDashboard() {
   // Stat cards
   document.getElementById('stat-trips').textContent = allTrips.length;
+  clearStatSkeletons();
 
   let totalBudget = 0, totalSpent = 0;
 
@@ -231,6 +305,17 @@ async function renderExpenses() {
     return;
   }
 
+  // Show skeleton rows while fetching
+  document.getElementById('expensesList').innerHTML = [1,2,3].map(() => `
+    <div class="expense-item skeleton-card">
+      <div class="expense-cat-icon skeleton-block"></div>
+      <div class="expense-info">
+        <div class="skeleton-block sk-line"></div>
+        <div class="skeleton-block sk-line sk-short" style="margin-top:6px"></div>
+      </div>
+      <div class="expense-amount"><div class="skeleton-block sk-short"></div></div>
+    </div>`).join('');
+
   try {
     const [expR, sumR] = await Promise.all([
       fetch(`${API_BASE}/expenses?tripId=${currentTripId}`).then(r => r.json()),
@@ -330,6 +415,7 @@ async function loadAnalytics(tripId) {
     return;
   }
   currentTripId = tripId;
+  showSectionLoader('analyticsContent', 'Crunching your numbers…');
   try {
     const r = await fetch(`${API_BASE}/expenses/summary/${tripId}`);
     const d = await r.json();
@@ -557,6 +643,8 @@ async function saveTrip() {
     notes:      document.getElementById('tripNotes').value,
   };
 
+  const saveBtn = document.querySelector('#tripModal .btn-primary');
+  const stopBtn = startBtnLoading(saveBtn, id ? 'Updating…' : 'Saving…');
   try {
     const url    = id ? `${API_BASE}/trips/${id}` : `${API_BASE}/trips`;
     const method = id ? 'PUT' : 'POST';
@@ -572,6 +660,8 @@ async function saveTrip() {
     }
   } catch (err) {
     showToast(err.message || 'Failed to save trip', 'error');
+  } finally {
+    stopBtn();
   }
 }
 
@@ -599,6 +689,8 @@ function confirmDeleteTrip(id) {
 }
 
 async function deleteTrip(id) {
+  const confirmBtn = document.getElementById('confirmBtn');
+  const stopBtn = startBtnLoading(confirmBtn, 'Deleting…');
   try {
     const r = await fetch(`${API_BASE}/trips/${id}`, { method: 'DELETE' });
     const d = await r.json();
@@ -609,6 +701,8 @@ async function deleteTrip(id) {
     await loadTrips();
   } catch (err) {
     showToast(err.message || 'Failed to delete', 'error');
+  } finally {
+    stopBtn();
   }
 }
 
@@ -628,6 +722,8 @@ async function saveExpense() {
     notes:         document.getElementById('expenseNotes').value,
   };
 
+  const saveBtn = document.querySelector('#expenseModal .btn-primary');
+  const stopBtn = startBtnLoading(saveBtn, id ? 'Updating…' : 'Adding…');
   try {
     const url    = id ? `${API_BASE}/expenses/${id}` : `${API_BASE}/expenses`;
     const method = id ? 'PUT' : 'POST';
@@ -641,6 +737,8 @@ async function saveExpense() {
     loadTrips();
   } catch (err) {
     showToast(err.message || 'Failed to save expense', 'error');
+  } finally {
+    stopBtn();
   }
 }
 
@@ -667,6 +765,8 @@ function confirmDeleteExpense(id) {
 }
 
 async function deleteExpense(id) {
+  const confirmBtn = document.getElementById('confirmBtn');
+  const stopBtn = startBtnLoading(confirmBtn, 'Deleting…');
   try {
     const r = await fetch(`${API_BASE}/expenses/${id}`, { method: 'DELETE' });
     const d = await r.json();
@@ -677,6 +777,8 @@ async function deleteExpense(id) {
     loadTrips();
   } catch (err) {
     showToast(err.message || 'Failed to delete', 'error');
+  } finally {
+    stopBtn();
   }
 }
 
@@ -764,8 +866,7 @@ async function runPlanner() {
   if (!destination) { showToast('Please enter a destination', 'error'); return; }
 
   const btn = document.getElementById('plannerGoBtn');
-  btn.disabled = true;
-  btn.textContent = 'Planning…';
+  const stopBtn = startBtnLoading(btn, 'Planning your trip…');
 
   document.getElementById('plannerResults').innerHTML = `
     <div class="planner-loading">
@@ -789,8 +890,7 @@ async function runPlanner() {
         <div style="font-size:13px;margin-top:6px;opacity:.7">${err.message}</div>
       </div>`;
   } finally {
-    btn.disabled = false;
-    btn.textContent = '✦ Plan My Trip';
+    stopBtn();
   }
 }
 
