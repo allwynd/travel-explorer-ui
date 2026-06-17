@@ -3,8 +3,8 @@
 ════════════════════════════════════════════════════ */
 
 const API_BASE = 
-"http://localhost:3000";
-//"https://mytravel-explorer-api-hmb2daezgtevaegu.australiaeast-01.azurewebsites.net";
+//"http://localhost:3000";
+"https://mytravel-explorer-api-hmb2daezgtevaegu.australiaeast-01.azurewebsites.net";
 
 let allTrips = [];
 let allExpenses = [];
