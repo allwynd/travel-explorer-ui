@@ -3,8 +3,8 @@
 ════════════════════════════════════════════════════ */
 
 const API_BASE = 
-//"http://localhost:3000";
-"https://mytravel-explorer-api-hmb2daezgtevaegu.australiaeast-01.azurewebsites.net";
+"http://localhost:3000";
+//"https://mytravel-explorer-api-hmb2daezgtevaegu.australiaeast-01.azurewebsites.net";
 
 let allTrips = [];
 let allExpenses = [];
@@ -251,9 +251,17 @@ function selectTripFromCard(id) {
 
 // ── Trips Table ───────────────────────────────────────────────────────────────
 async function renderTripsTable() {
-  const tbody = document.getElementById('tripsTableBody');
+  const tbody     = document.getElementById('tripsTableBody');
+  const mobileList = document.getElementById('tripsMobileList');
+
   if (allTrips.length === 0) {
     tbody.innerHTML = `<tr><td colspan="8" class="empty-row">No trips found. Create one!</td></tr>`;
+    mobileList.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🧳</div>
+        <p>No trips yet. Add your first one!</p>
+        <button class="btn btn-primary" onclick="openModal('tripModal')">+ New Trip</button>
+      </div>`;
     return;
   }
 
@@ -269,22 +277,24 @@ async function renderTripsTable() {
       } catch { spent = 0; }
     }
     const budget = trip.budget || 0;
-    const over = spent > budget && budget > 0;
+    const over   = spent > budget && budget > 0;
     const nearly = !over && budget > 0 && spent / budget >= 0.8;
-    const badge = over ? '<span class="badge badge-over">Over budget</span>'
-                : nearly ? '<span class="badge badge-warn">Nearly there</span>'
-                : '<span class="badge badge-ok">On track</span>';
+    const badgeClass = over ? 'badge-over' : nearly ? 'badge-warn' : 'badge-ok';
+    const badgeText  = over ? 'Over budget' : nearly ? 'Nearly there' : 'On track';
     const startD = trip.startDate ? new Date(trip.startDate).toLocaleDateString() : '—';
     const endD   = trip.endDate   ? new Date(trip.endDate).toLocaleDateString()   : '—';
-    return `
+    const curr   = trip.currency || 'USD';
+
+    // ── Desktop table row ──────────────────────────────────────────────────
+    const tableRow = `
       <tr>
         <td><strong>${esc(trip.name)}</strong></td>
         <td>📍 ${esc(trip.destination)}</td>
         <td><span class="mono" style="font-size:12px">${startD} → ${endD}</span></td>
-        <td>${trip.currency || 'USD'}</td>
-        <td class="mono">${fmt(budget, trip.currency)}</td>
-        <td class="mono" style="color:var(--rust)">${fmt(spent, trip.currency)}</td>
-        <td>${badge}</td>
+        <td>${curr}</td>
+        <td class="mono">${fmt(budget, curr)}</td>
+        <td class="mono" style="color:var(--rust)">${fmt(spent, curr)}</td>
+        <td><span class="badge ${badgeClass}">${badgeText}</span></td>
         <td>
           <div style="display:flex;gap:6px">
             <button class="btn btn-sm btn-ghost" onclick="editTrip('${trip._id}')">Edit</button>
@@ -292,8 +302,46 @@ async function renderTripsTable() {
           </div>
         </td>
       </tr>`;
+
+    // ── Mobile card ────────────────────────────────────────────────────────
+    const mobileCard = `
+      <div class="trip-mobile-card">
+        <div class="tmc-header">
+          <div>
+            <div class="tmc-name">${esc(trip.name)}</div>
+            <div class="tmc-dest">📍 ${esc(trip.destination)}</div>
+          </div>
+          <span class="badge ${badgeClass}">${badgeText}</span>
+        </div>
+        <div class="tmc-row">
+          <span class="tmc-lbl">Dates</span>
+          <span class="tmc-val">${startD} → ${endD}</span>
+        </div>
+        <div class="tmc-row">
+          <span class="tmc-lbl">Budget</span>
+          <span class="tmc-val">${fmt(budget, curr)}</span>
+        </div>
+        <div class="tmc-row">
+          <span class="tmc-lbl">Spent</span>
+          <span class="tmc-val" style="color:var(--rust)">${fmt(spent, curr)}</span>
+        </div>
+        <div class="tmc-row" style="border-bottom:none">
+          <span class="tmc-lbl">Remaining</span>
+          <span class="tmc-val" style="color:${over ? '#e03a2e' : 'var(--teal)'}">
+            ${fmt(Math.abs(budget - spent), curr)} ${over ? 'over' : 'left'}
+          </span>
+        </div>
+        <div class="tmc-actions">
+          <button class="btn btn-sm btn-ghost" onclick="editTrip('${trip._id}')">✏️ Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="confirmDeleteTrip('${trip._id}')">🗑 Delete</button>
+        </div>
+      </div>`;
+
+    return { tableRow, mobileCard };
   }));
-  tbody.innerHTML = rows.join('');
+
+  tbody.innerHTML    = rows.map(r => r.tableRow).join('');
+  mobileList.innerHTML = rows.map(r => r.mobileCard).join('');
 }
 
 // ── Expenses ──────────────────────────────────────────────────────────────────
@@ -593,7 +641,7 @@ function buildDonut(cats, colorMap, currency) {
   });
 
   return `
-    <svg class="donut-svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <svg class="donut-svg" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
       ${paths}
       <text x="${cx}" y="${cy - 6}" text-anchor="middle"
         font-family="'Playfair Display',serif" font-size="15" font-weight="700" fill="#1a1410">
