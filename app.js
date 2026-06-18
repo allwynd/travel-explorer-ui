@@ -967,7 +967,7 @@ function renderPlannerResults(plan, params) {
   const tipsList   = Array.isArray(plan.tips) ? plan.tips : [];
   const totalAll  = categories.reduce((s, c) => s + (c.totalCost || 0), 0);
   const totalPP   = Math.round(totalAll / params.travellers);
-  const budgetLabel = { budget: '🎒 Budget', mid: '⭐ Mid', luxury: '💎 Luxury' }[params.budgetLevel];
+  const budgetLabel = { budget: '🎒 Budget', mid: '⭐ Mid-Level', luxury: '💎 Luxury' }[params.budgetLevel];
 
   // Store plan safely on window so the Create Trip button can reference it
   // without embedding raw JSON inside an HTML attribute (which breaks on
