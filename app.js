@@ -3,7 +3,7 @@
 ════════════════════════════════════════════════════ */
 
 const API_BASE = 
-//"http://localhost:3000";
+//http://localhost:3000";
 "https://mytravel-explorer-api-hmb2daezgtevaegu.australiaeast-01.azurewebsites.net";
 
 const TRAVEL_AGENT_API_BASE = "https://travel-explorer-api.azure-api.net/api"
@@ -967,7 +967,7 @@ function renderPlannerResults(plan, params) {
   const tipsList   = Array.isArray(plan.tips) ? plan.tips : [];
   const totalAll  = categories.reduce((s, c) => s + (c.totalCost || 0), 0);
   const totalPP   = Math.round(totalAll / params.travellers);
-  const budgetLabel = { budget: '🎒 Budget', mid: '⭐ Mid-range', luxury: '💎 Luxury' }[params.budgetLevel];
+  const budgetLabel = { budget: '🎒 Budget', mid: '⭐ Mid', luxury: '💎 Luxury' }[params.budgetLevel];
 
   // Store plan safely on window so the Create Trip button can reference it
   // without embedding raw JSON inside an HTML attribute (which breaks on
