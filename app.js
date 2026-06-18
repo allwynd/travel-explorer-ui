@@ -3,10 +3,8 @@
 ════════════════════════════════════════════════════ */
 
 const API_BASE = 
-//http://localhost:3000";
+//"http://localhost:3000";
 "https://mytravel-explorer-api-hmb2daezgtevaegu.australiaeast-01.azurewebsites.net";
-
-const TRAVEL_AGENT_API_BASE = "https://travel-explorer-api.azure-api.net/api"
 
 let allTrips = [];
 let allExpenses = [];
@@ -913,7 +911,19 @@ async function runPlanner() {
   const duration    = parseInt(document.getElementById('plannerDuration').value) || 7;
   const budgetLevel = document.getElementById('plannerBudgetLevel').value;
 
-  if (!destination) { showToast('Please enter a destination', 'error'); return; }
+  // Validate a country was actually selected from the combobox
+  const originSelected      = typeof comboState !== 'undefined' ? comboState.origin.selectedName      : origin;
+  const destSelected        = typeof comboState !== 'undefined' ? comboState.destination.selectedName : destination;
+
+  if (!destination) {
+    showToast('Please select a destination country', 'error');
+    document.getElementById('plannerDestination').focus();
+    return;
+  }
+  if (!destSelected && destination) {
+    // User typed but didn't pick from list — accept the typed value with a note
+    showToast('Tip: pick a country from the dropdown for best results', 'info');
+  }
 
   const btn = document.getElementById('plannerGoBtn');
   const stopBtn = startBtnLoading(btn, 'Planning your trip…');
@@ -945,9 +955,9 @@ async function runPlanner() {
 }
 
 async function fetchTripPlan({ origin, destination, travellers, duration, budgetLevel }) {
-  const response = await fetch(`${TRAVEL_AGENT_API_BASE}/plan`, {
+  const response = await fetch(`${API_BASE}/plan`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Ocp-Apim-Subscription-Key': 'd69db697f85f42588812ae0606f2d0f3' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ origin, destination, travellers, duration, budgetLevel }),
   });
 
@@ -967,7 +977,7 @@ function renderPlannerResults(plan, params) {
   const tipsList   = Array.isArray(plan.tips) ? plan.tips : [];
   const totalAll  = categories.reduce((s, c) => s + (c.totalCost || 0), 0);
   const totalPP   = Math.round(totalAll / params.travellers);
-  const budgetLabel = { budget: '🎒 Budget', mid: '⭐ Mid-Level', luxury: '💎 Luxury' }[params.budgetLevel];
+  const budgetLabel = { budget: '🎒 Budget', mid: '⭐ Mid-range', luxury: '💎 Luxury' }[params.budgetLevel];
 
   // Store plan safely on window so the Create Trip button can reference it
   // without embedding raw JSON inside an HTML attribute (which breaks on

@@ -1836,3 +1836,164 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 700; line-heig
   opacity: 0.5;
   letter-spacing: 0.04em;
 }
+
+/* ═══════════════════════════════════════════════════
+   COUNTRY AUTOCOMPLETE COMBOBOX
+════════════════════════════════════════════════════ */
+
+.country-combo {
+  position: relative;
+}
+
+.country-combo-input-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--sand);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 0 10px;
+  transition: var(--transition);
+  gap: 6px;
+}
+.country-combo-input-wrap:focus-within {
+  border-color: var(--rust);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(200,82,42,0.10);
+}
+
+.country-combo-flag {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+  min-width: 22px;
+  text-align: center;
+}
+
+.country-combo-input {
+  flex: 1;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  padding: 10px 0 !important;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  min-width: 0;
+}
+.country-combo-input::placeholder { opacity: 0.45; }
+
+.country-combo-clear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-soft);
+  opacity: 0.4;
+  font-size: 13px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.country-combo-clear:hover { opacity: 0.8; }
+.country-combo-clear.hidden { display: none; }
+
+/* Dropdown list */
+.country-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0; right: 0;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(26,20,16,0.14);
+  z-index: 400;
+  max-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  padding: 6px;
+  margin: 0;
+  /* hidden by default */
+  display: none;
+  animation: dropIn 0.15s ease;
+}
+.country-dropdown.open { display: block; }
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Scrollbar styling */
+.country-dropdown::-webkit-scrollbar { width: 5px; }
+.country-dropdown::-webkit-scrollbar-track { background: transparent; }
+.country-dropdown::-webkit-scrollbar-thumb { background: var(--sand-d); border-radius: 4px; }
+
+.country-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--ink);
+  transition: background 0.12s;
+  user-select: none;
+}
+.country-option:hover,
+.country-option.highlighted {
+  background: var(--sand);
+}
+.country-option.selected {
+  background: rgba(200,82,42,0.08);
+  font-weight: 600;
+}
+
+.country-option-flag  { font-size: 18px; line-height: 1; flex-shrink: 0; }
+.country-option-name  { flex: 1; display: flex; align-items: center; gap: 6px; }
+.country-option-region {
+  font-size: 11px;
+  opacity: 0.4;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.country-option-citytag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--teal);
+  background: rgba(42,122,110,0.12);
+  border-radius: 4px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+}
+
+/* No results */
+.country-no-results {
+  padding: 14px 12px;
+  font-size: 13px;
+  opacity: 0.45;
+  text-align: center;
+}
+
+/* Section header inside dropdown */
+.country-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.35;
+  padding: 8px 12px 4px;
+}
+
+/* Match highlight */
+.country-option mark {
+  background: rgba(212,168,67,0.35);
+  border-radius: 2px;
+  font-style: normal;
+  padding: 0 1px;
+  color: inherit;
+}

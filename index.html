@@ -237,12 +237,52 @@
         <div class="planner-search-row">
           <div class="planner-field">
             <label>Flying from</label>
-            <input type="text" id="plannerOrigin" placeholder="e.g. Auckland" />
+            <div class="country-combo" id="comboOrigin">
+              <div class="country-combo-input-wrap">
+                <span class="country-combo-flag" id="flagOrigin"></span>
+                <input
+                  type="text"
+                  id="plannerOrigin"
+                  class="country-combo-input"
+                  placeholder="Type a country or city…"
+                  autocomplete="off"
+                  role="combobox"
+                  aria-expanded="false"
+                  aria-autocomplete="list"
+                  aria-controls="listOrigin"
+                  oninput="filterCountries('origin')"
+                  onkeydown="comboKeydown(event,'origin')"
+                  onfocus="openCombo('origin')"
+                />
+                <button class="country-combo-clear hidden" id="clearOrigin" onclick="clearCombo('origin')" tabindex="-1" aria-label="Clear">✕</button>
+              </div>
+              <ul class="country-dropdown" id="listOrigin" role="listbox" aria-label="Countries"></ul>
+            </div>
           </div>
           <div class="planner-divider">→</div>
           <div class="planner-field">
             <label>Destination</label>
-            <input type="text" id="plannerDestination" placeholder="e.g. Tokyo, Japan" />
+            <div class="country-combo" id="comboDestination">
+              <div class="country-combo-input-wrap">
+                <span class="country-combo-flag" id="flagDestination"></span>
+                <input
+                  type="text"
+                  id="plannerDestination"
+                  class="country-combo-input"
+                  placeholder="Type a country or city…"
+                  autocomplete="off"
+                  role="combobox"
+                  aria-expanded="false"
+                  aria-autocomplete="list"
+                  aria-controls="listDestination"
+                  oninput="filterCountries('destination')"
+                  onkeydown="comboKeydown(event,'destination')"
+                  onfocus="openCombo('destination')"
+                />
+                <button class="country-combo-clear hidden" id="clearDestination" onclick="clearCombo('destination')" tabindex="-1" aria-label="Clear">✕</button>
+              </div>
+              <ul class="country-dropdown" id="listDestination" role="listbox" aria-label="Countries"></ul>
+            </div>
           </div>
           <div class="planner-field planner-field-sm">
             <label>Travellers</label>
@@ -433,6 +473,7 @@
   <!-- Toast Notification -->
   <div class="toast-container" id="toastContainer"></div>
 
+  <script src="countries.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
