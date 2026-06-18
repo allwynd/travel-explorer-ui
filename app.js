@@ -6,6 +6,8 @@ const API_BASE =
 //"http://localhost:3000";
 "https://mytravel-explorer-api-hmb2daezgtevaegu.australiaeast-01.azurewebsites.net";
 
+const TRAVEL_AGENT_API_BASE = "https://travel-explorer-api.azure-api.net/api"
+
 let allTrips = [];
 let allExpenses = [];
 let currentTripId = null;
@@ -955,9 +957,9 @@ async function runPlanner() {
 }
 
 async function fetchTripPlan({ origin, destination, travellers, duration, budgetLevel }) {
-  const response = await fetch(`${API_BASE}/plan`, {
+  const response = await fetch(`${TRAVEL_AGENT_API_BASE}/plan`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json','Ocp-Apim-Subscription-Key': 'd69db697f85f42588812ae0606f2d0f3' },
     body: JSON.stringify({ origin, destination, travellers, duration, budgetLevel }),
   });
 
