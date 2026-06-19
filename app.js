@@ -6,7 +6,9 @@ const API_BASE =
 //"http://localhost:3000";
 "https://mytravel-explorer-api-hmb2daezgtevaegu.australiaeast-01.azurewebsites.net";
 
-const TRAVEL_AGENT_API_BASE = "https://travel-explorer-api.azure-api.net/api"
+const TRAVEL_AGENT_API_BASE = 
+//"http://localhost:3000";
+"https://travel-explorer-api.azure-api.net/api"
 
 let allTrips = [];
 let allExpenses = [];

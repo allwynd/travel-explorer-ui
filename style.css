@@ -1074,6 +1074,7 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 700; line-heig
 
 .planner-ai-sub {
   font-size: 12px;
+  margin-top: 8px;
   color: rgba(255,255,255,0.45);
   line-height: 1.4;
 }
