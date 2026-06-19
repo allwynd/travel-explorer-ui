@@ -937,6 +937,7 @@ function addTag(type, rawValue) {
   document.getElementById(TAG_FIELD_CONFIG[type].inputId).value = '';
   hideTagSuggestions(type);
   renderTagChips(type);
+  document.getElementById(TAG_FIELD_CONFIG[type].inputId).focus();
 }
 
 function removeTag(type, value) {
@@ -944,13 +945,19 @@ function removeTag(type, value) {
   renderTagChips(type);
 }
 
+// Chips are built with data-value attributes and a single delegated click
+// listener per list (see initTagInputs below) rather than inline onclick
+// handlers with embedded values — inline handlers built via JSON.stringify
+// break the surrounding double-quoted HTML attribute whenever the value
+// itself contains a double quote, which silently kills the click on both
+// desktop and mobile.
 function renderTagChips(type) {
   const cfg = TAG_FIELD_CONFIG[type];
   const wrap = document.getElementById(cfg.chipListId);
   wrap.innerHTML = advancedSearchState[type].map(value => `
     <span class="tag-chip">
       ${esc(value)}
-      <button type="button" class="tag-chip-remove" onclick="event.stopPropagation(); removeTag('${type}', ${JSON.stringify(value)})" aria-label="Remove">✕</button>
+      <button type="button" class="tag-chip-remove" data-value="${esc(value)}" aria-label="Remove">✕</button>
     </span>`).join('');
 }
 
@@ -1006,7 +1013,7 @@ function suggestTagOptions(type) {
     return;
   }
   suggestEl.innerHTML = matches.map(opt => `
-    <li class="tag-suggest-item" data-value="${esc(opt)}" onmousedown="event.preventDefault(); addTag('${type}', ${JSON.stringify(opt)})">${esc(opt)}</li>`).join('');
+    <li class="tag-suggest-item" data-value="${esc(opt)}">${esc(opt)}</li>`).join('');
   suggestEl.classList.remove('hidden');
 }
 
@@ -1039,7 +1046,7 @@ function suggestCityOptions(query, taken, suggestEl) {
   }
 
   suggestEl.innerHTML = matches.map(c => `
-    <li class="tag-suggest-item" data-value="${esc(c.name)}" onmousedown="event.preventDefault(); addTag('cities', ${JSON.stringify(c.name)})">
+    <li class="tag-suggest-item" data-value="${esc(c.name)}">
       <span class="tag-suggest-flag">${c.flag}</span> ${esc(c.name)}
       <span class="tag-suggest-sub">${esc(c.country)}</span>
     </li>`).join('');
@@ -1049,6 +1056,43 @@ function suggestCityOptions(query, taken, suggestEl) {
 function hideTagSuggestions(type) {
   const el = document.getElementById(TAG_FIELD_CONFIG[type].suggestId);
   if (el) { el.classList.add('hidden'); el.innerHTML = ''; }
+}
+
+// Delegated listeners — set up once per field so suggestion clicks/taps and
+// chip removals work reliably on both mouse and touch input. Using
+// pointerdown (instead of click) with preventDefault stops the input from
+// blurring/closing the list before the tap registers, which is what made
+// selection unreliable on mobile.
+function initTagInputs() {
+  Object.keys(TAG_FIELD_CONFIG).forEach(type => {
+    const cfg = TAG_FIELD_CONFIG[type];
+
+    const suggestEl = document.getElementById(cfg.suggestId);
+    if (suggestEl) {
+      suggestEl.addEventListener('pointerdown', e => {
+        const li = e.target.closest('.tag-suggest-item:not(.tag-suggest-empty)');
+        if (!li) return;
+        e.preventDefault();
+        addTag(type, li.dataset.value);
+      });
+    }
+
+    const chipListEl = document.getElementById(cfg.chipListId);
+    if (chipListEl) {
+      chipListEl.addEventListener('click', e => {
+        const btn = e.target.closest('.tag-chip-remove');
+        if (!btn) return;
+        e.stopPropagation();
+        removeTag(type, btn.dataset.value);
+      });
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', initTagInputs);
+// In case this script runs after DOMContentLoaded has already fired (e.g. script placed at end of body).
+if (document.readyState === 'interactive' || document.readyState === 'complete') {
+  initTagInputs();
 }
 
 // ── Plan My Trip ──────────────────────────────────────────────────────────────
