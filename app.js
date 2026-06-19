@@ -1109,7 +1109,7 @@ async function runPlanner() {
   const travelMonth         = document.getElementById('plannerTravelMonth').value || '';
   const preferredCities     = [...advancedSearchState.cities];
   const preferredActivities = [...advancedSearchState.activities];
-  const foodPreference      = [...advancedSearchState.food];
+  const foodPreferences      = [...advancedSearchState.food];
 
   // Validate a country was actually selected from the combobox
   const originSelected      = typeof comboState !== 'undefined' ? comboState.origin.selectedName      : origin;
@@ -1140,8 +1140,8 @@ async function runPlanner() {
     </div>`;
 
   try {
-    const plan = await fetchTripPlan({ origin, destination, travellers, duration, budgetLevel, currency, travelMonth, preferredCities, preferredActivities, foodPreference });
-    renderPlannerResults(plan, { origin, destination, travellers, duration, budgetLevel, currency, travelMonth, preferredCities, preferredActivities, foodPreference });
+    const plan = await fetchTripPlan({ origin, destination, travellers, duration, budgetLevel, currency, travelMonth, preferredCities, preferredActivities, foodPreferences });
+    renderPlannerResults(plan, { origin, destination, travellers, duration, budgetLevel, currency, travelMonth, preferredCities, preferredActivities, foodPreferences });
   } catch (err) {
     document.getElementById('plannerResults').innerHTML = `
       <div class="planner-error">
@@ -1154,12 +1154,12 @@ async function runPlanner() {
   }
 }
 
-async function fetchTripPlan({ origin, destination, travellers, duration, budgetLevel, currency, travelMonth, preferredCities, preferredActivities, foodPreference }) {
+async function fetchTripPlan({ origin, destination, travellers, duration, budgetLevel, currency, travelMonth, preferredCities, preferredActivities, foodPreferences }) {
   const body = { origin, destination, travellers, duration, budgetLevel, currency: currency || 'NZD' };
   if (travelMonth) body.travelMonth = travelMonth;
   if (preferredCities && preferredCities.length) body.preferredCities = preferredCities;
   if (preferredActivities && preferredActivities.length) body.preferredActivities = preferredActivities;
-  if (foodPreference && foodPreference.length) body.foodPreference = foodPreference;
+  if (foodPreferences && foodPreferences.length) body.foodPreferences = foodPreferences;
 
   const response = await fetch(`${TRAVEL_AGENT_API_BASE}/plan`, {
     method: 'POST',
@@ -1223,11 +1223,11 @@ function renderPlannerResults(plan, params) {
       <div class="planner-hero-eyebrow">✦ Your Trip Plan · ${budgetLabel}</div>
       <div class="planner-hero-title">${esc(plan.destination)}</div>
       <div class="planner-hero-meta">${params.travellers} traveller${params.travellers > 1 ? 's' : ''} · ${params.duration} nights${params.origin ? ' · from ' + esc(params.origin) : ''}${params.travelMonth ? ' · ' + esc(params.travelMonth) : ''} · ${esc(params.currency || 'NZD')}</div>
-      ${(params.preferredCities && params.preferredCities.length) || (params.preferredActivities && params.preferredActivities.length) || (params.foodPreference && params.foodPreference.length) ? `
+      ${(params.preferredCities && params.preferredCities.length) || (params.preferredActivities && params.preferredActivities.length) || (params.foodPreferences && params.foodPreferences.length) ? `
       <div class="planner-hero-meta" style="opacity:.6">
         ${params.preferredCities && params.preferredCities.length ? `🏙 ${esc(params.preferredCities.join(', '))}` : ''}
         ${params.preferredActivities && params.preferredActivities.length ? ` · 🎯 ${esc(params.preferredActivities.join(', '))}` : ''}
-        ${params.foodPreference && params.foodPreference.length ? ` · 🍽 ${esc(params.foodPreference.join(', '))}` : ''}
+        ${params.foodPreferences && params.foodPreferences.length ? ` · 🍽 ${esc(params.foodPreferences.join(', '))}` : ''}
       </div>` : ''}
       <div class="planner-hero-meta" style="font-style:italic;margin-bottom:20px;opacity:.45">${esc(plan.summary)}</div>
       <div class="planner-hero-totals">
