@@ -305,6 +305,116 @@
             </select>
           </div>
         </div>
+
+        <!-- Advanced Search toggle -->
+        <button type="button" class="planner-advanced-toggle" id="advancedToggle" onclick="toggleAdvancedSearch()">
+          <span class="planner-advanced-toggle-icon" id="advancedToggleIcon">▸</span>
+          Advanced Search
+          <span class="planner-advanced-toggle-hint">currency · travel month · cities · activities · food</span>
+        </button>
+
+        <!-- Advanced Search panel -->
+        <div class="planner-advanced-panel hidden" id="advancedPanel">
+          <div class="planner-search-row">
+            <div class="planner-field planner-field-sm">
+              <label>Currency</label>
+              <select id="plannerCurrency">
+                <option value="USD">USD — US Dollar</option>
+                <option value="EUR">EUR — Euro</option>
+                <option value="GBP">GBP — British Pound</option>
+                <option value="AUD">AUD — Australian Dollar</option>
+                <option value="NZD" selected>NZD — New Zealand Dollar</option>
+                <option value="JPY">JPY — Japanese Yen</option>
+                <option value="CAD">CAD — Canadian Dollar</option>
+                <option value="SGD">SGD — Singapore Dollar</option>
+                <option value="THB">THB — Thai Baht</option>
+                <option value="IDR">IDR — Indonesian Rupiah</option>
+                <option value="MYR">MYR — Malaysian Ringgit</option>
+                <option value="PHP">PHP — Philippine Peso</option>
+                <option value="INR">INR — Indian Rupee</option>
+                <option value="CNY">CNY — Chinese Yuan</option>
+                <option value="HKD">HKD — Hong Kong Dollar</option>
+                <option value="KRW">KRW — Korean Won</option>
+              </select>
+            </div>
+            <div class="planner-field planner-field-sm">
+              <label>Travel month</label>
+              <select id="plannerTravelMonth">
+                <option value="">Flexible</option>
+                <option value="January">January</option>
+                <option value="February">February</option>
+                <option value="March">March</option>
+                <option value="April">April</option>
+                <option value="May">May</option>
+                <option value="June">June</option>
+                <option value="July">July</option>
+                <option value="August">August</option>
+                <option value="September">September</option>
+                <option value="October">October</option>
+                <option value="November">November</option>
+                <option value="December">December</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="planner-search-row">
+            <div class="planner-field">
+              <label>Preferred cities</label>
+              <div class="tag-input" id="tagWrapCities" onclick="document.getElementById('inputCities').focus()">
+                <div class="tag-chip-list" id="chipListCities"></div>
+                <input
+                  type="text"
+                  id="inputCities"
+                  class="tag-input-field"
+                  placeholder="Search a city…"
+                  oninput="suggestTagOptions('cities')"
+                  onkeydown="tagInputKeydown(event,'cities')"
+                  onfocus="suggestTagOptions('cities')"
+                  onblur="setTimeout(()=>hideTagSuggestions('cities'),150)"
+                />
+                <ul class="tag-suggest-list hidden" id="suggestCities"></ul>
+              </div>
+            </div>
+            <div class="planner-field">
+              <label>Preferred activities</label>
+              <div class="tag-input" id="tagWrapActivities" onclick="document.getElementById('inputActivities').focus()">
+                <div class="tag-chip-list" id="chipListActivities"></div>
+                <input
+                  type="text"
+                  id="inputActivities"
+                  class="tag-input-field"
+                  placeholder="e.g. hiking, museums…"
+                  oninput="suggestTagOptions('activities')"
+                  onkeydown="tagInputKeydown(event,'activities')"
+                  onfocus="suggestTagOptions('activities')"
+                  onblur="setTimeout(()=>hideTagSuggestions('activities'),150)"
+                />
+                <ul class="tag-suggest-list hidden" id="suggestActivities"></ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="planner-search-row">
+            <div class="planner-field">
+              <label>Food preference</label>
+              <div class="tag-input" id="tagWrapFood" onclick="document.getElementById('inputFood').focus()">
+                <div class="tag-chip-list" id="chipListFood"></div>
+                <input
+                  type="text"
+                  id="inputFood"
+                  class="tag-input-field"
+                  placeholder="e.g. vegetarian, halal…"
+                  oninput="suggestTagOptions('food')"
+                  onkeydown="tagInputKeydown(event,'food')"
+                  onfocus="suggestTagOptions('food')"
+                  onblur="setTimeout(()=>hideTagSuggestions('food'),150)"
+                />
+                <ul class="tag-suggest-list hidden" id="suggestFood"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <button class="btn btn-primary planner-go-btn" id="plannerGoBtn" onclick="runPlanner()">
           ✦ Plan My Trip
         </button>

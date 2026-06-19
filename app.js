@@ -3,8 +3,8 @@
 ════════════════════════════════════════════════════ */
 
 const API_BASE = 
-//"http://localhost:3000";
-"https://mytravel-explorer-api-hmb2daezgtevaegu.australiaeast-01.azurewebsites.net";
+"http://localhost:3000";
+//"https://mytravel-explorer-api-hmb2daezgtevaegu.australiaeast-01.azurewebsites.net";
 
 const TRAVEL_AGENT_API_BASE = 
 //"http://localhost:3000";
@@ -906,6 +906,151 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
   });
 });
 
+// ── Plan My Trip — Advanced Search ──────────────────────────────────────────
+
+const TAG_FIELD_CONFIG = {
+  cities:     { inputId: 'inputCities',     chipListId: 'chipListCities',     suggestId: 'suggestCities',     suggestions: [] },
+  activities: { inputId: 'inputActivities', chipListId: 'chipListActivities', suggestId: 'suggestActivities',
+    suggestions: ['hiking', 'museums', 'beaches', 'nightlife', 'shopping', 'food tours', 'wildlife', 'snorkeling', 'skiing', 'historical sites', 'theme parks', 'photography'] },
+  food:       { inputId: 'inputFood',       chipListId: 'chipListFood',       suggestId: 'suggestFood',
+    suggestions: ['vegetarian', 'vegan', 'halal', 'kosher', 'gluten-free', 'pescatarian', 'dairy-free', 'no restrictions'] },
+};
+
+const advancedSearchState = { cities: [], activities: [], food: [] };
+
+function toggleAdvancedSearch() {
+  const panel = document.getElementById('advancedPanel');
+  const toggle = document.getElementById('advancedToggle');
+  const icon = document.getElementById('advancedToggleIcon');
+  const opening = panel.classList.contains('hidden');
+  panel.classList.toggle('hidden');
+  toggle.classList.toggle('open', opening);
+  icon.textContent = opening ? '▾' : '▸';
+}
+
+function addTag(type, rawValue) {
+  const value = (rawValue || '').trim();
+  if (!value) return;
+  const list = advancedSearchState[type];
+  const exists = list.some(v => v.toLowerCase() === value.toLowerCase());
+  if (!exists) list.push(value);
+  document.getElementById(TAG_FIELD_CONFIG[type].inputId).value = '';
+  hideTagSuggestions(type);
+  renderTagChips(type);
+}
+
+function removeTag(type, value) {
+  advancedSearchState[type] = advancedSearchState[type].filter(v => v !== value);
+  renderTagChips(type);
+}
+
+function renderTagChips(type) {
+  const cfg = TAG_FIELD_CONFIG[type];
+  const wrap = document.getElementById(cfg.chipListId);
+  wrap.innerHTML = advancedSearchState[type].map(value => `
+    <span class="tag-chip">
+      ${esc(value)}
+      <button type="button" class="tag-chip-remove" onclick="event.stopPropagation(); removeTag('${type}', ${JSON.stringify(value)})" aria-label="Remove">✕</button>
+    </span>`).join('');
+}
+
+function tagInputKeydown(event, type) {
+  const suggestEl = document.getElementById(TAG_FIELD_CONFIG[type].suggestId);
+  const items = suggestEl ? Array.from(suggestEl.querySelectorAll('.tag-suggest-item:not(.tag-suggest-empty)')) : [];
+  const activeIdx = items.findIndex(i => i.classList.contains('active'));
+
+  if (event.key === 'ArrowDown' && items.length) {
+    event.preventDefault();
+    const next = items[Math.min(activeIdx + 1, items.length - 1)];
+    items.forEach(i => i.classList.remove('active'));
+    next.classList.add('active');
+    return;
+  }
+  if (event.key === 'ArrowUp' && items.length) {
+    event.preventDefault();
+    const prev = items[Math.max(activeIdx - 1, 0)];
+    items.forEach(i => i.classList.remove('active'));
+    prev.classList.add('active');
+    return;
+  }
+  if (event.key === 'Enter' || event.key === ',') {
+    event.preventDefault();
+    const active = items.find(i => i.classList.contains('active'));
+    addTag(type, active ? active.dataset.value : event.target.value);
+    return;
+  }
+  if (event.key === 'Backspace' && !event.target.value) {
+    const list = advancedSearchState[type];
+    if (list.length) removeTag(type, list[list.length - 1]);
+  }
+}
+
+function suggestTagOptions(type) {
+  const cfg = TAG_FIELD_CONFIG[type];
+  const input = document.getElementById(cfg.inputId);
+  const suggestEl = document.getElementById(cfg.suggestId);
+  const query = input.value.trim().toLowerCase();
+  const taken = advancedSearchState[type].map(v => v.toLowerCase());
+
+  if (type === 'cities') {
+    suggestCityOptions(query, taken, suggestEl);
+    return;
+  }
+
+  const matches = cfg.suggestions.filter(opt =>
+    !taken.includes(opt.toLowerCase()) && (!query || opt.toLowerCase().includes(query))
+  );
+
+  if (!matches.length) {
+    hideTagSuggestions(type);
+    return;
+  }
+  suggestEl.innerHTML = matches.map(opt => `
+    <li class="tag-suggest-item" data-value="${esc(opt)}" onmousedown="event.preventDefault(); addTag('${type}', ${JSON.stringify(opt)})">${esc(opt)}</li>`).join('');
+  suggestEl.classList.remove('hidden');
+}
+
+// City search backed by the CITIES dataset in countries.js, so Preferred Cities
+// offers the same searchable, flag-labeled picker as the origin/destination combos.
+function suggestCityOptions(query, taken, suggestEl) {
+  if (typeof CITIES === 'undefined') { hideTagSuggestions('cities'); return; }
+
+  let matches;
+  if (!query) {
+    matches = CITIES.filter(c => c.popular);
+  } else {
+    const rank = (name) => {
+      const n = name.toLowerCase();
+      if (n.startsWith(query)) return 0;
+      if (n.includes(' ' + query)) return 1;
+      return 2;
+    };
+    matches = CITIES
+      .filter(c => c.name.toLowerCase().includes(query) || c.country.toLowerCase().includes(query))
+      .sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name));
+  }
+
+  matches = matches.filter(c => !taken.includes(c.name.toLowerCase())).slice(0, 8);
+
+  if (!matches.length) {
+    suggestEl.innerHTML = `<li class="tag-suggest-item tag-suggest-empty">No matching cities — press Enter to add "${esc(query)}"</li>`;
+    suggestEl.classList.remove('hidden');
+    return;
+  }
+
+  suggestEl.innerHTML = matches.map(c => `
+    <li class="tag-suggest-item" data-value="${esc(c.name)}" onmousedown="event.preventDefault(); addTag('cities', ${JSON.stringify(c.name)})">
+      <span class="tag-suggest-flag">${c.flag}</span> ${esc(c.name)}
+      <span class="tag-suggest-sub">${esc(c.country)}</span>
+    </li>`).join('');
+  suggestEl.classList.remove('hidden');
+}
+
+function hideTagSuggestions(type) {
+  const el = document.getElementById(TAG_FIELD_CONFIG[type].suggestId);
+  if (el) { el.classList.add('hidden'); el.innerHTML = ''; }
+}
+
 // ── Plan My Trip ──────────────────────────────────────────────────────────────
 
 async function runPlanner() {
@@ -914,6 +1059,13 @@ async function runPlanner() {
   const travellers  = parseInt(document.getElementById('plannerTravellers').value) || 2;
   const duration    = parseInt(document.getElementById('plannerDuration').value) || 7;
   const budgetLevel = document.getElementById('plannerBudgetLevel').value;
+
+  // Advanced (optional) search parameters
+  const currency            = document.getElementById('plannerCurrency').value || 'NZD';
+  const travelMonth         = document.getElementById('plannerTravelMonth').value || '';
+  const preferredCities     = [...advancedSearchState.cities];
+  const preferredActivities = [...advancedSearchState.activities];
+  const foodPreference      = [...advancedSearchState.food];
 
   // Validate a country was actually selected from the combobox
   const originSelected      = typeof comboState !== 'undefined' ? comboState.origin.selectedName      : origin;
@@ -944,8 +1096,8 @@ async function runPlanner() {
     </div>`;
 
   try {
-    const plan = await fetchTripPlan({ origin, destination, travellers, duration, budgetLevel });
-    renderPlannerResults(plan, { origin, destination, travellers, duration, budgetLevel });
+    const plan = await fetchTripPlan({ origin, destination, travellers, duration, budgetLevel, currency, travelMonth, preferredCities, preferredActivities, foodPreference });
+    renderPlannerResults(plan, { origin, destination, travellers, duration, budgetLevel, currency, travelMonth, preferredCities, preferredActivities, foodPreference });
   } catch (err) {
     document.getElementById('plannerResults').innerHTML = `
       <div class="planner-error">
@@ -958,11 +1110,17 @@ async function runPlanner() {
   }
 }
 
-async function fetchTripPlan({ origin, destination, travellers, duration, budgetLevel }) {
+async function fetchTripPlan({ origin, destination, travellers, duration, budgetLevel, currency, travelMonth, preferredCities, preferredActivities, foodPreference }) {
+  const body = { origin, destination, travellers, duration, budgetLevel, currency: currency || 'NZD' };
+  if (travelMonth) body.travelMonth = travelMonth;
+  if (preferredCities && preferredCities.length) body.preferredCities = preferredCities;
+  if (preferredActivities && preferredActivities.length) body.preferredActivities = preferredActivities;
+  if (foodPreference && foodPreference.length) body.foodPreference = foodPreference;
+
   const response = await fetch(`${TRAVEL_AGENT_API_BASE}/plan`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json','Ocp-Apim-Subscription-Key': 'd69db697f85f42588812ae0606f2d0f3' },
-    body: JSON.stringify({ origin, destination, travellers, duration, budgetLevel }),
+    body: JSON.stringify(body),
   });
 
   const data = await response.json();
@@ -1020,7 +1178,13 @@ function renderPlannerResults(plan, params) {
     <div class="planner-hero">
       <div class="planner-hero-eyebrow">✦ Your Trip Plan · ${budgetLabel}</div>
       <div class="planner-hero-title">${esc(plan.destination)}</div>
-      <div class="planner-hero-meta">${params.travellers} traveller${params.travellers > 1 ? 's' : ''} · ${params.duration} nights${params.origin ? ' · from ' + esc(params.origin) : ''}</div>
+      <div class="planner-hero-meta">${params.travellers} traveller${params.travellers > 1 ? 's' : ''} · ${params.duration} nights${params.origin ? ' · from ' + esc(params.origin) : ''}${params.travelMonth ? ' · ' + esc(params.travelMonth) : ''} · ${esc(params.currency || 'NZD')}</div>
+      ${(params.preferredCities && params.preferredCities.length) || (params.preferredActivities && params.preferredActivities.length) || (params.foodPreference && params.foodPreference.length) ? `
+      <div class="planner-hero-meta" style="opacity:.6">
+        ${params.preferredCities && params.preferredCities.length ? `🏙 ${esc(params.preferredCities.join(', '))}` : ''}
+        ${params.preferredActivities && params.preferredActivities.length ? ` · 🎯 ${esc(params.preferredActivities.join(', '))}` : ''}
+        ${params.foodPreference && params.foodPreference.length ? ` · 🍽 ${esc(params.foodPreference.join(', '))}` : ''}
+      </div>` : ''}
       <div class="planner-hero-meta" style="font-style:italic;margin-bottom:20px;opacity:.45">${esc(plan.summary)}</div>
       <div class="planner-hero-totals">
         <div class="planner-total-item">
