@@ -171,8 +171,10 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 700; line-heig
 .main-content {
   margin-left: var(--sidebar-w);
   flex: 1;
+  min-width: 0;          /* critical: lets flex child shrink below content size */
   min-height: 100vh;
   padding: 40px 48px;
+  position: relative;    /* positioning parent for sign-in overlay              */
 }
 
 /* ── Views ──────────────────────────────────────── */
@@ -182,6 +184,10 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 700; line-heig
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* ── Page Header ────────────────────────────────── */
@@ -760,10 +766,40 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 700; line-heig
 @media (max-width: 768px) {
 
   /* ── Layout ──────────────────────────────────── */
-  .sidebar { transform: translateX(-100%); }
-  .sidebar.open { transform: translateX(0); }
+  .sidebar {
+    transform: translateX(-100%);
+    visibility: hidden;          /* removes from hit-testing when off-screen   */
+    box-shadow: none;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    visibility: visible;
+    box-shadow: 4px 0 32px rgba(0,0,0,0.35);
+  }
   .mobile-header { display: flex; }
-  .main-content { margin-left: 0; padding: 72px 14px 32px; }
+  .main-content {
+    margin-left: 0;
+    padding: 72px 14px 32px;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* ── Sidebar backdrop (injected by toggleSidebar in app.js) ── */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 99;                 /* below sidebar (100), above everything else */
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
+    animation: backdropIn 0.22s ease;
+  }
+  .sidebar-backdrop.visible { display: block; }
+
+  /* Prevent page scrolling under an open sidebar */
+  body.sidebar-open { overflow: hidden; }
 
   /* ── General ─────────────────────────────────── */
   .stats-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -2166,4 +2202,103 @@ h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 700; line-heig
   font-style: normal;
   padding: 0 1px;
   color: inherit;
+}
+/* ── Auth gate — locked nav & sign-in overlay ─────────────────────────────── */
+
+/* Locked nav buttons — muted, no hover, lock cursor */
+.nav-btn.nav-locked {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Locked page-header buttons ("+ New Trip") */
+.btn-primary.nav-locked {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Full-area sign-in overlay sitting above the dashboard content */
+.signin-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(245, 239, 230, 0.72);   /* --sand with blur */
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 50;
+  border-radius: var(--radius);
+}
+
+.signin-overlay-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 52px 48px;
+  text-align: center;
+  max-width: 420px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.signin-overlay-icon {
+  font-size: 44px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.signin-overlay-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.signin-overlay-sub {
+  font-size: 14.5px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 320px;
+}
+
+.signin-overlay-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 12px 24px;
+  background: #fff;
+  color: #3c4043;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.signin-overlay-btn:hover {
+  box-shadow: 0 3px 12px rgba(0,0,0,0.18);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 600px) {
+  .signin-overlay-card {
+    padding: 36px 24px;
+  }
+  .signin-overlay-title {
+    font-size: 22px;
+  }
 }

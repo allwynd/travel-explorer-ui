@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="auth.css" />
 </head>
 <body>
 
@@ -33,6 +34,12 @@
         <div class="brand-name">Travel Explorer</div>
         <div class="brand-sub">Budget Tracker</div>
       </div>
+    </div>
+
+    <div class="auth-area" id="authArea">
+      <button class="auth-signin-btn" id="authBtn" onclick="signInWithGoogle()">
+        Sign in with Google
+    </button>
     </div>
 
     <nav class="sidebar-nav">
@@ -588,6 +595,8 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <script src="countries.js"></script>
+  <script type="module" src="auth.js"></script> 
   <script src="app.js"></script>
+  
 </body>
 </html>

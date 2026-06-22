@@ -102,12 +102,93 @@ function clearStatSkeletons() {
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', async () => {
-  showPageLoader();
-  await loadTrips();
+document.addEventListener('DOMContentLoaded', () => {
+  // Lock the UI immediately — auth.js fires onUserSignedIn / onUserSignedOut
+  // once Firebase resolves the auth state (fast, usually <300 ms from cache).
+  setNavLocked(true);
+  showSignInOverlay();
   checkHealth();
   hidePageLoader();
 });
+
+// ── Auth gate — called by auth.js via window hooks ────────────────────────────
+
+window.onUserSignedIn = async (user) => {
+  setNavLocked(false);
+  hideSignInOverlay();
+  showPageLoader();
+  await loadTrips();
+  hidePageLoader();
+};
+
+window.onUserSignedOut = () => {
+  // Clear all in-memory data so previous user's trips aren't visible
+  allTrips    = [];
+  allExpenses = [];
+  currentTripId = null;
+
+  setNavLocked(true);
+  showSignInOverlay();
+
+  // Reset trip selects and stats to blank state
+  ['globalTripSelect','expenseTripSelect','analyticsTripSelect'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<option value="">— Select a trip —</option>';
+  });
+  ['stat-trips','stat-budget','stat-spent','stat-remaining'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = '—'; el.classList.add('skeleton-val'); }
+  });
+  const grid = document.getElementById('tripGrid');
+  if (grid) grid.innerHTML = '';
+};
+
+// ── Nav lock helpers ──────────────────────────────────────────────────────────
+
+function setNavLocked(locked) {
+  // Lock/unlock all sidebar nav buttons
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.disabled = locked;
+    btn.classList.toggle('nav-locked', locked);
+  });
+  // Lock/unlock every "New Trip" / "+ Add" primary button on the dashboard
+  document.querySelectorAll('.page-header .btn-primary').forEach(btn => {
+    btn.disabled = locked;
+    btn.classList.toggle('nav-locked', locked);
+  });
+  // Lock the trip select dropdown
+  const tripSel = document.getElementById('globalTripSelect');
+  if (tripSel) tripSel.disabled = locked;
+}
+
+// ── Sign-in overlay ───────────────────────────────────────────────────────────
+
+function showSignInOverlay() {
+  if (document.getElementById('signInOverlay')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'signInOverlay';
+  overlay.className = 'signin-overlay';
+  overlay.innerHTML = `
+    <div class="signin-overlay-card">
+      <div class="signin-overlay-icon">✈</div>
+      <h2 class="signin-overlay-title">Welcome to Travel Explorer</h2>
+      <p class="signin-overlay-sub">Sign in to view your trips, track expenses, and plan your next adventure.</p>
+      <button class="signin-overlay-btn" onclick="signInWithGoogle()">
+        <svg width="18" height="18" viewBox="0 0 18 18">
+          <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92A8.78 8.78 0 0 0 17.64 9.2z"/>
+          <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/>
+          <path fill="#FBBC05" d="M3.97 10.72A5.4 5.4 0 0 1 3.68 9c0-.6.1-1.18.29-1.72V4.95H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.05l3.01-2.33z"/>
+          <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.59-2.59C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/>
+        </svg>
+        Sign in with Google
+      </button>
+    </div>`;
+  document.getElementById('mainContent').appendChild(overlay);
+}
+
+function hideSignInOverlay() {
+  document.getElementById('signInOverlay')?.remove();
+}
 
 async function checkHealth() {
   try {
@@ -123,6 +204,8 @@ async function checkHealth() {
 
 // ── Navigation ────────────────────────────────────────────────────────────────
 function switchView(view) {
+  if (!window.getCurrentUser?.()) return;   // block if not signed in
+
   document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(`view-${view}`).classList.remove('hidden');
@@ -133,18 +216,37 @@ function switchView(view) {
   if (view === 'analytics') populateAnalyticsTripSelect();
   if (view === 'trips') renderTripsTable();
 
-  // Close sidebar on mobile
-  document.getElementById('sidebar').classList.remove('open');
+  // Close sidebar + backdrop on mobile
+  closeSidebar();
 }
 
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
+  const sidebar = document.getElementById('sidebar');
+  const isOpen  = sidebar.classList.toggle('open');
+
+  // Create the backdrop once, reuse it on every open/close
+  let backdrop = document.getElementById('sidebarBackdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.id        = 'sidebarBackdrop';
+    backdrop.className = 'sidebar-backdrop';
+    backdrop.addEventListener('click', closeSidebar);
+    document.body.appendChild(backdrop);
+  }
+  backdrop.classList.toggle('visible', isOpen);
+  document.body.classList.toggle('sidebar-open', isOpen);
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('sidebarBackdrop')?.classList.remove('visible');
+  document.body.classList.remove('sidebar-open');
 }
 
 // ── Trip Loading ──────────────────────────────────────────────────────────────
 async function loadTrips() {
   try {
-    const r = await fetch(`${API_BASE}/trips`);
+    const r = await authFetch(`${API_BASE}/trips`);
     const d = await r.json();
     allTrips = d.data || [];
     renderDashboard();
@@ -188,7 +290,7 @@ async function renderDashboard() {
 
   // Load summary for each trip
   const summaries = await Promise.allSettled(
-    allTrips.map(t => fetch(`${API_BASE}/expenses/summary/${t._id}`).then(r => r.json()))
+    allTrips.map(t => authFetch(`${API_BASE}/expenses/summary/${t._id}`).then(r => r.json()))
   );
 
   summaries.forEach((res, i) => {
@@ -274,7 +376,7 @@ async function renderTripsTable() {
     let spent = trip._spent;
     if (spent === undefined) {
       try {
-        const r = await fetch(`${API_BASE}/expenses/summary/${trip._id}`);
+        const r = await authFetch(`${API_BASE}/expenses/summary/${trip._id}`);
         const d = await r.json();
         spent = d.success ? d.data.totalSpent : 0;
         trip._spent = spent;
@@ -370,8 +472,8 @@ async function renderExpenses() {
 
   try {
     const [expR, sumR] = await Promise.all([
-      fetch(`${API_BASE}/expenses?tripId=${currentTripId}`).then(r => r.json()),
-      fetch(`${API_BASE}/expenses/summary/${currentTripId}`).then(r => r.json()),
+      authFetch(`${API_BASE}/expenses?tripId=${currentTripId}`).then(r => r.json()),
+      authFetch(`${API_BASE}/expenses/summary/${currentTripId}`).then(r => r.json()),
     ]);
     allExpenses = expR.data || [];
     const sum = sumR.data;
@@ -469,7 +571,7 @@ async function loadAnalytics(tripId) {
   currentTripId = tripId;
   showSectionLoader('analyticsContent', 'Crunching your numbers…');
   try {
-    const r = await fetch(`${API_BASE}/expenses/summary/${tripId}`);
+    const r = await authFetch(`${API_BASE}/expenses/summary/${tripId}`);
     const d = await r.json();
     if (!d.success) return;
     renderAnalytics(d.data);
@@ -700,7 +802,7 @@ async function saveTrip() {
   try {
     const url    = id ? `${API_BASE}/trips/${id}` : `${API_BASE}/trips`;
     const method = id ? 'PUT' : 'POST';
-    const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const r = await authFetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     const d = await r.json();
     if (!d.success) throw new Error(d.message);
     closeModal('tripModal');
@@ -744,7 +846,7 @@ async function deleteTrip(id) {
   const confirmBtn = document.getElementById('confirmBtn');
   const stopBtn = startBtnLoading(confirmBtn, 'Deleting…');
   try {
-    const r = await fetch(`${API_BASE}/trips/${id}`, { method: 'DELETE' });
+    const r = await authFetch(`${API_BASE}/trips/${id}`, { method: 'DELETE' });
     const d = await r.json();
     if (!d.success) throw new Error(d.message);
     closeModal('confirmModal');
@@ -779,7 +881,7 @@ async function saveExpense() {
   try {
     const url    = id ? `${API_BASE}/expenses/${id}` : `${API_BASE}/expenses`;
     const method = id ? 'PUT' : 'POST';
-    const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const r = await authFetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     const d = await r.json();
     if (!d.success) throw new Error(d.message);
     closeModal('expenseModal');
@@ -820,7 +922,7 @@ async function deleteExpense(id) {
   const confirmBtn = document.getElementById('confirmBtn');
   const stopBtn = startBtnLoading(confirmBtn, 'Deleting…');
   try {
-    const r = await fetch(`${API_BASE}/expenses/${id}`, { method: 'DELETE' });
+    const r = await authFetch(`${API_BASE}/expenses/${id}`, { method: 'DELETE' });
     const d = await r.json();
     if (!d.success) throw new Error(d.message);
     closeModal('confirmModal');
@@ -1161,7 +1263,7 @@ async function fetchTripPlan({ origin, destination, travellers, duration, budget
   if (preferredActivities && preferredActivities.length) body.preferredActivities = preferredActivities;
   if (foodPreferences && foodPreferences.length) body.foodPreferences = foodPreferences;
 
-  const response = await fetch(`${TRAVEL_AGENT_API_BASE}/plan`, {
+  const response = await authFetch(`${TRAVEL_AGENT_API_BASE}/plan`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json','Ocp-Apim-Subscription-Key': 'd69db697f85f42588812ae0606f2d0f3' },
     body: JSON.stringify(body),
