@@ -1261,7 +1261,7 @@ async function fetchTripPlan({ origin, destination, travellers, duration, budget
 
   const response = await authFetch(`${API_BASE}/agent/plan`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json','Ocp-Apim-Subscription-Key': 'd69db697f85f42588812ae0606f2d0f3' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
 
