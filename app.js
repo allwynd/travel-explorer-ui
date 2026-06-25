@@ -4,7 +4,7 @@
 
 const API_BASE = 
 //"http://localhost:3000";
-"https://travel-explorer-api.azure-api.net";
+"https://travel-explorer-api.azure-api.net/api";
 
 let allTrips = [];
 let allExpenses = [];
@@ -188,7 +188,7 @@ function hideSignInOverlay() {
 
 async function checkHealth() {
   try {
-    const r = await fetch(`${API_BASE}/api/health`);
+    const r = await fetch(`${API_BASE}/health`);
     const d = await r.json();
     const dot = document.querySelector('.db-dot');
     const label = document.querySelector('.db-status');
@@ -242,7 +242,7 @@ function closeSidebar() {
 // ── Trip Loading ──────────────────────────────────────────────────────────────
 async function loadTrips() {
   try {
-    const r = await authFetch(`${API_BASE}/api/trips`);
+    const r = await authFetch(`${API_BASE}/trips`);
     const d = await r.json();
     allTrips = d.data || [];
     renderDashboard();
@@ -286,7 +286,7 @@ async function renderDashboard() {
 
   // Load summary for each trip
   const summaries = await Promise.allSettled(
-    allTrips.map(t => authFetch(`${API_BASE}/api/expenses/summary/${t._id}`).then(r => r.json()))
+    allTrips.map(t => authFetch(`${API_BASE}/expenses/summary/${t._id}`).then(r => r.json()))
   );
 
   summaries.forEach((res, i) => {
@@ -372,7 +372,7 @@ async function renderTripsTable() {
     let spent = trip._spent;
     if (spent === undefined) {
       try {
-        const r = await authFetch(`${API_BASE}/api/expenses/summary/${trip._id}`);
+        const r = await authFetch(`${API_BASE}/expenses/summary/${trip._id}`);
         const d = await r.json();
         spent = d.success ? d.data.totalSpent : 0;
         trip._spent = spent;
@@ -468,8 +468,8 @@ async function renderExpenses() {
 
   try {
     const [expR, sumR] = await Promise.all([
-      authFetch(`${API_BASE}/api/expenses?tripId=${currentTripId}`).then(r => r.json()),
-      authFetch(`${API_BASE}/api/expenses/summary/${currentTripId}`).then(r => r.json()),
+      authFetch(`${API_BASE}/expenses?tripId=${currentTripId}`).then(r => r.json()),
+      authFetch(`${API_BASE}/expenses/summary/${currentTripId}`).then(r => r.json()),
     ]);
     allExpenses = expR.data || [];
     const sum = sumR.data;
@@ -567,7 +567,7 @@ async function loadAnalytics(tripId) {
   currentTripId = tripId;
   showSectionLoader('analyticsContent', 'Crunching your numbers…');
   try {
-    const r = await authFetch(`${API_BASE}/api/expenses/summary/${tripId}`);
+    const r = await authFetch(`${API_BASE}/expenses/summary/${tripId}`);
     const d = await r.json();
     if (!d.success) return;
     renderAnalytics(d.data);
@@ -796,7 +796,7 @@ async function saveTrip() {
   const saveBtn = document.querySelector('#tripModal .btn-primary');
   const stopBtn = startBtnLoading(saveBtn, id ? 'Updating…' : 'Saving…');
   try {
-    const url    = id ? `${API_BASE}/api/trips/${id}` : `${API_BASE}/api/trips`;
+    const url    = id ? `${API_BASE}/trips/${id}` : `${API_BASE}/trips`;
     const method = id ? 'PUT' : 'POST';
     const r = await authFetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     const d = await r.json();
@@ -842,7 +842,7 @@ async function deleteTrip(id) {
   const confirmBtn = document.getElementById('confirmBtn');
   const stopBtn = startBtnLoading(confirmBtn, 'Deleting…');
   try {
-    const r = await authFetch(`${API_BASE}/api/trips/${id}`, { method: 'DELETE' });
+    const r = await authFetch(`${API_BASE}/trips/${id}`, { method: 'DELETE' });
     const d = await r.json();
     if (!d.success) throw new Error(d.message);
     closeModal('confirmModal');
@@ -875,7 +875,7 @@ async function saveExpense() {
   const saveBtn = document.querySelector('#expenseModal .btn-primary');
   const stopBtn = startBtnLoading(saveBtn, id ? 'Updating…' : 'Adding…');
   try {
-    const url    = id ? `${API_BASE}/api/expenses/${id}` : `${API_BASE}/api/expenses`;
+    const url    = id ? `${API_BASE}/expenses/${id}` : `${API_BASE}/expenses`;
     const method = id ? 'PUT' : 'POST';
     const r = await authFetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     const d = await r.json();
@@ -918,7 +918,7 @@ async function deleteExpense(id) {
   const confirmBtn = document.getElementById('confirmBtn');
   const stopBtn = startBtnLoading(confirmBtn, 'Deleting…');
   try {
-    const r = await authFetch(`${API_BASE}/api/expenses/${id}`, { method: 'DELETE' });
+    const r = await authFetch(`${API_BASE}/expenses/${id}`, { method: 'DELETE' });
     const d = await r.json();
     if (!d.success) throw new Error(d.message);
     closeModal('confirmModal');

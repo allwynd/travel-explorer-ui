@@ -116,7 +116,12 @@ async function authFetch(url, options = {}) {
   if (currentIdToken) {
     headers.set("Authorization", `Bearer ${currentIdToken}`);
   }
-  headers.set("Ocp-Apim-Subscription-Key", "d69db697f85f42588812ae0606f2d0f3"); // Add the subscription key header
+  if (currentUser) {
+    headers.set("X-User-Id",    currentUser.uid);
+    //headers.set("X-User-Email", currentUser.email       || "");
+    //headers.set("X-User-Name",  currentUser.displayName || "");
+  }
+  headers.set("Ocp-Apim-Subscription-Key", "d69db697f85f42588812ae0606f2d0f3");
   return fetch(url, { ...options, headers });
 }
 
