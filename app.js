@@ -3,8 +3,12 @@
 ════════════════════════════════════════════════════ */
 
 const API_BASE = 
-//"http://localhost:3000";
+//http://localhost:3000";
 "https://travel-explorer-api.azure-api.net/api";
+
+const AGENT_BASE = 
+//"http://localhost:3000";
+"https://travel-explorer-api.azure-api.net/agent";
 
 let allTrips = [];
 let allExpenses = [];
@@ -1259,7 +1263,7 @@ async function fetchTripPlan({ origin, destination, travellers, duration, budget
   if (preferredActivities && preferredActivities.length) body.preferredActivities = preferredActivities;
   if (foodPreferences && foodPreferences.length) body.foodPreferences = foodPreferences;
 
-  const response = await authFetch(`${API_BASE}/agent/plan`, {
+  const response = await authFetch(`${AGENT_BASE}/plan`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
