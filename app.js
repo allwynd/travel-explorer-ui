@@ -3,12 +3,12 @@
 ════════════════════════════════════════════════════ */
 
 const API_BASE = 
-"http://localhost:3000";
-//"https://travel-explorer-api.azure-api.net/api";
+//"http://localhost:3000";
+"https://travel-explorer-api.azure-api.net/api";
 
 const AGENT_BASE = 
-"http://localhost:3000";
-//"https://travel-explorer-api.azure-api.net/agent";
+//"http://localhost:3000";
+"https://travel-explorer-api.azure-api.net/agent";
 
 let allTrips = [];
 let allExpenses = [];
