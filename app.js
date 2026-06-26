@@ -3,7 +3,7 @@
 ════════════════════════════════════════════════════ */
 
 const API_BASE = 
-//http://localhost:3000";
+//"http://localhost:3000";
 "https://travel-explorer-api.azure-api.net/api";
 
 const AGENT_BASE = 
@@ -784,7 +784,8 @@ function openAddExpenseModal() {
 async function saveTrip() {
   const id   = document.getElementById('tripId').value;
   const name = document.getElementById('tripName').value.trim();
-  const dest = document.getElementById('tripDestination').value.trim();
+  // Read destination from the combobox input (works whether the user typed or picked from the list)
+  const dest = (document.getElementById('tripDestinationInput')?.value || '').trim();
   if (!name || !dest) { showToast('Name and destination are required', 'error'); return; }
 
   const payload = {
@@ -825,7 +826,12 @@ function editTrip(id) {
   document.getElementById('tripId').value          = trip._id;
   document.getElementById('tripModalTitle').textContent = 'Edit Trip';
   document.getElementById('tripName').value        = trip.name;
-  document.getElementById('tripDestination').value = trip.destination;
+  // Populate the destination combobox
+  if (typeof selectCountry === 'function') {
+    const destName = trip.destination || '';
+    const match = [...(window.COUNTRIES || []), ...(window.CITIES || [])].find(c => c.name === destName);
+    selectCountry('tripDestination', destName, match?.flag || '🌍', true);
+  }
   document.getElementById('tripStartDate').value   = (trip.startDate || '').split('T')[0];
   document.getElementById('tripEndDate').value     = (trip.endDate || '').split('T')[0];
   document.getElementById('tripCurrency').value    = trip.currency || 'USD';
@@ -865,6 +871,8 @@ async function saveExpense() {
   const id     = document.getElementById('expenseId').value;
   const amount = parseFloat(document.getElementById('expenseAmount').value);
   if (!amount || amount <= 0) { showToast('Enter a valid amount', 'error'); return; }
+  const date = document.getElementById('expenseDate').value;
+  if (!date) { showToast('Date is required', 'error'); document.getElementById('expenseDate').focus(); return; }
 
   const payload = {
     tripId:        currentTripId,
@@ -941,7 +949,7 @@ document.querySelector('[onclick="openModal(\'tripModal\')"]')?.addEventListener
   document.getElementById('tripId').value = '';
   document.getElementById('tripModalTitle').textContent = 'New Trip';
   document.getElementById('tripName').value = '';
-  document.getElementById('tripDestination').value = '';
+  if (typeof clearCombo === 'function') clearCombo('tripDestination');
   document.getElementById('tripStartDate').value = '';
   document.getElementById('tripEndDate').value = '';
   document.getElementById('tripCurrency').value = 'USD';
@@ -956,9 +964,10 @@ document.querySelectorAll('[onclick="openModal(\'tripModal\')"]').forEach(btn =>
 function resetTripForm() {
   document.getElementById('tripId').value = '';
   document.getElementById('tripModalTitle').textContent = 'New Trip';
-  ['tripName','tripDestination','tripBudget','tripNotes'].forEach(id => {
+  ['tripName','tripBudget','tripNotes'].forEach(id => {
     document.getElementById(id).value = '';
   });
+  if (typeof clearCombo === 'function') clearCombo('tripDestination');
   document.getElementById('tripStartDate').value = '';
   document.getElementById('tripEndDate').value = '';
   document.getElementById('tripCurrency').value = 'USD';
@@ -1373,7 +1382,12 @@ function createTripFromPlan(plan, totalBudget) {
   document.getElementById('tripId').value = '';
   document.getElementById('tripModalTitle').textContent = 'New Trip';
   document.getElementById('tripName').value = plan.destination;
-  document.getElementById('tripDestination').value = plan.destination;
+  // Populate the destination combobox with the AI-planned destination
+  if (typeof selectCountry === 'function') {
+    const destName = plan.destination || '';
+    const match = [...(window.COUNTRIES || []), ...(window.CITIES || [])].find(c => c.name === destName);
+    selectCountry('tripDestination', destName, match?.flag || '🌍', true);
+  }
   document.getElementById('tripStartDate').value = '';
   document.getElementById('tripEndDate').value = '';
   document.getElementById('tripCurrency').value = 'USD';

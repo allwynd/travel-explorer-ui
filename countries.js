@@ -363,13 +363,15 @@ const CITIES = [
 
 // ── Combobox state ────────────────────────────────────────────────────────────
 const comboState = {
-  origin:      { selectedName: '', highlightIdx: -1 },
-  destination: { selectedName: '', highlightIdx: -1 },
+  origin:          { selectedName: '', highlightIdx: -1 },
+  destination:     { selectedName: '', highlightIdx: -1 },
+  tripDestination: { selectedName: '', highlightIdx: -1 },
 };
 
 const COMBO_IDS = {
-  origin:      { input: 'plannerOrigin',      list: 'listOrigin',      flag: 'flagOrigin',      clear: 'clearOrigin'      },
-  destination: { input: 'plannerDestination', list: 'listDestination', flag: 'flagDestination', clear: 'clearDestination' },
+  origin:          { input: 'plannerOrigin',        list: 'listOrigin',        flag: 'flagOrigin',        clear: 'clearOrigin'        },
+  destination:     { input: 'plannerDestination',   list: 'listDestination',   flag: 'flagDestination',   clear: 'clearDestination'   },
+  tripDestination: { input: 'tripDestinationInput', list: 'listTripDest',      flag: 'flagTripDest',      clear: 'clearTripDest'      },
 };
 
 // ── Render helpers ────────────────────────────────────────────────────────────
@@ -494,7 +496,7 @@ function filterCountries(comboKey) {
   openCombo(comboKey);
 }
 
-function selectCountry(comboKey, name, flagEmoji) {
+function selectCountry(comboKey, name, flagEmoji, silent = false) {
   const ids = COMBO_IDS[comboKey];
   const input = document.getElementById(ids.input);
   const list  = document.getElementById(ids.list);
@@ -508,16 +510,16 @@ function selectCountry(comboKey, name, flagEmoji) {
 
   list.classList.remove('open');
   input.setAttribute('aria-expanded', 'false');
-  input.focus();
+  if (!silent) input.focus();
 }
 
-function clearCombo(comboKey) {
+function clearCombo(comboKey, silent = false) {
   const ids = COMBO_IDS[comboKey];
   document.getElementById(ids.input).value = '';
   document.getElementById(ids.flag).textContent = '';
   document.getElementById(ids.clear).classList.add('hidden');
   comboState[comboKey].selectedName = '';
-  document.getElementById(ids.input).focus();
+  if (!silent) document.getElementById(ids.input).focus();
 }
 
 function hoverOption(comboKey, el) {
@@ -568,7 +570,7 @@ function updateHighlight(options, idx) {
 
 // Close any open dropdown when clicking outside
 document.addEventListener('mousedown', (e) => {
-  ['origin', 'destination'].forEach(key => {
+  ['origin', 'destination', 'tripDestination'].forEach(key => {
     const ids = COMBO_IDS[key];
     const combo = document.getElementById(ids.input)?.closest('.country-combo');
     if (combo && !combo.contains(e.target)) {

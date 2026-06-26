@@ -458,7 +458,27 @@
           </div>
           <div class="form-group">
             <label>Destination *</label>
-            <input type="text" id="tripDestination" placeholder="e.g. Bali, Indonesia" />
+            <div class="country-combo" id="comboTripDest">
+              <div class="country-combo-input-wrap">
+                <span class="country-combo-flag" id="flagTripDest"></span>
+                <input
+                  type="text"
+                  id="tripDestinationInput"
+                  class="country-combo-input"
+                  placeholder="Search city or country…"
+                  autocomplete="off"
+                  role="combobox"
+                  aria-expanded="false"
+                  aria-autocomplete="list"
+                  aria-controls="listTripDest"
+                  oninput="filterCountries('tripDestination')"
+                  onkeydown="comboKeydown(event,'tripDestination')"
+                  onfocus="openCombo('tripDestination')"
+                />
+                <button class="country-combo-clear hidden" id="clearTripDest" onclick="clearCombo('tripDestination')" tabindex="-1" aria-label="Clear">✕</button>
+              </div>
+              <ul class="country-dropdown" id="listTripDest" role="listbox" aria-label="Destinations"></ul>
+            </div>
           </div>
         </div>
         <div class="form-row">
@@ -547,7 +567,7 @@
             <input type="text" id="expenseDescription" placeholder="What did you spend on?" />
           </div>
           <div class="form-group">
-            <label>Date</label>
+            <label>Date *</label>
             <input type="date" id="expenseDate" />
           </div>
         </div>
